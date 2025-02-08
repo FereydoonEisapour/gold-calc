@@ -10,11 +10,12 @@ const port = 3000;
 async function fetchGoldPrices(url, targets) {
     try {
         // ارسال درخواست GET به وب‌سایت
-        const response = await axios.get(url, {
-            headers: {
-               
-            }
-        });
+const response = await fetch('https://www.tgju.org/gold-chart', {
+    method: 'GET',
+    headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+});
         // پارس کردن محتوای HTML
         const $ = cheerio.load(response.data);
         // نتایج قیمت‌ها
