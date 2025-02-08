@@ -71,7 +71,7 @@ function calculateTotalPrice(weight, type) {
  */
 async function fetchGoldPrices() {
     try {
-        const response = await fetch('https://your-backend-proxy-url/gold-prices'); // Replace with your backend URL
+        const response = await fetch('https://gold-calc.vercel.app/'); // Replace with your backend URL
         if (!response.ok) throw new Error('خطا در دریافت اطلاعات');
 
         const fetchedPrices = await response.json();
