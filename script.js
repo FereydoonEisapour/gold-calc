@@ -7,42 +7,32 @@ const app = express();
 const port = 3000;
 
 // تابع برای استخراج قیمت طلا بر اساس متن هدف
-async function fetchGoldPrices(url, targets) {
+async function fetchGoldPrices() {
     try {
-        // ارسال درخواست GET به وب‌سایت
-const response = await fetch('https://www.tgju.org/gold-chart', {
-    method: 'GET',
-    headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-});
-        // پارس کردن محتوای HTML
-        const $ = cheerio.load(response.data);
-        // نتایج قیمت‌ها
-        const prices = {};
-        // استخراج قیمت برای هر یک از مقادیر هدف
-        for (const target of targets) {
-            const goldTh = $('th').filter((_, el) => $(el).text().trim() === target);
-            if (goldTh.length === 0) {
-                console.warn(`عنصر <th> با متن '${target}' پیدا نشد.`);
-                prices[target] = null;
-                continue;
+        const response = await fetch('https://www.tgju.org/gold-chart', {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
-            // یافتن عنصر <td class="nf"> مجاور
-            const priceTd = goldTh.next('.nf');
-            if (priceTd.length === 0) {
-                console.warn(`عنصر قیمت (class='nf') برای '${target}' پیدا نشد.`);
-                prices[target] = null;
-                continue;
-            }
-            // استخراج متن قیمت و حذف فاصله‌ها
-            const priceText = priceTd.text().trim();
-            prices[target] = priceText.replace(/\s+/g, ''); // حذف فاصله‌ها بین اعداد
-        }
-        return prices;
+        });
+
+        if (!response.ok) throw new Error('خطا در دریافت اطلاعات');
+
+        const text = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+
+        const targets = ["طلای 18 عیار / 750", "طلای 18 عیار / 740"];
+        targets.forEach(target => {
+            const th = Array.from(doc.querySelectorAll('th')).find(el => el.textContent.trim() === target);
+            goldPrices[target] = th?.nextElementSibling?.textContent.trim() || 'نامشخص';
+        });
+
+        localStorage.setItem('goldPrices', JSON.stringify(goldPrices)); // Cache prices
+        displayPrices(goldPrices);
     } catch (error) {
-        console.error(`خطایی رخ داد: ${error.message}`);
-        return null;
+        console.error('خطا در دریافت اطلاعات:', error);
+        alert('خطا در بارگذاری قیمت‌ها. از قیمت‌های ذخیره شده استفاده می‌شود.');
     }
 }
 
