@@ -1,53 +1,4 @@
-const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
-
-// ایجاد یک نمونه از اپلیکیشن Express
-const app = express();
-const port = 3000;
-
-// تابع برای استخراج قیمت طلا بر اساس متن هدف
-async function fetchGoldPrices() {
-    try {
-        const response = await fetch('https://www.tgju.org/gold-chart', {
-            method: 'GET',
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
-
-        if (!response.ok) throw new Error('خطا در دریافت اطلاعات');
-
-        const text = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-
-        const targets = ["طلای 18 عیار / 750", "طلای 18 عیار / 740"];
-        targets.forEach(target => {
-            const th = Array.from(doc.querySelectorAll('th')).find(el => el.textContent.trim() === target);
-            goldPrices[target] = th?.nextElementSibling?.textContent.trim() || 'نامشخص';
-        });
-
-        localStorage.setItem('goldPrices', JSON.stringify(goldPrices)); // Cache prices
-        displayPrices(goldPrices);
-    } catch (error) {
-        console.error('خطا در دریافت اطلاعات:', error);
-        alert('خطا در بارگذاری قیمت‌ها. از قیمت‌های ذخیره شده استفاده می‌شود.');
-    }
-}
-
-// API برای دریافت قیمت طلا
-app.get('/api/gold-prices', async (req, res) => {
-    const url = "https://www.tgju.org/gold-chart";
-    const targets = ["طلای 18 عیار / 750", "طلای 18 عیار / 740"]; // لیست مقادیر هدف
-    const goldPrices = await fetchGoldPrices(url, targets);
-
-    if (goldPrices) {
-        res.json(goldPrices);
-    } else {
-        res.status(500).json({ error: "خطایی در دریافت اطلاعات رخ داد." });
-    }
-});// script.js
+// script.js
 
 const goldPrices = {};
 let cachedPrices = {};
@@ -58,6 +9,9 @@ if (localStorage.getItem('goldPrices')) {
     displayPrices(cachedPrices);
 }
 
+/**
+ * Convert carat and calculate gold weights.
+ */
 function convertCarat() {
     const weight = parseFloat(document.getElementById('weight').value);
     const carat = parseFloat(document.getElementById('carat').value);
@@ -81,14 +35,23 @@ function convertCarat() {
     `;
 }
 
+/**
+ * Validate user input.
+ */
 function isValidInput(weight, carat) {
     return !isNaN(weight) && !isNaN(carat) && weight > 0 && carat > 0 && carat <= 1000;
 }
 
+/**
+ * Calculate pure gold weight.
+ */
 function calculatePureWeight(weight, carat) {
     return (weight * (carat / 1000)).toFixed(3);
 }
 
+/**
+ * Convert pure weight to standard carats.
+ */
 function convertToStandardCarats(pureWeight) {
     return {
         18: (pureWeight / (18 / 24)).toFixed(3),
@@ -96,33 +59,24 @@ function convertToStandardCarats(pureWeight) {
     };
 }
 
+/**
+ * Calculate total price based on weight and type.
+ */
 function calculateTotalPrice(weight, type) {
     const price = goldPrices[type] ? parseFloat(goldPrices[type].replace(/,/g, '')) : 0;
     return weight && price ? (weight * price).toLocaleString() : 'نامشخص';
 }
 
+/**
+ * Fetch gold prices from the backend proxy.
+ */
 async function fetchGoldPrices() {
     try {
-        const response = await fetch('https://www.tgju.org/gold-chart', {
-            method: 'GET',
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            },
-            timeout: 5000 // Timeout after 5 seconds
-        });
-
+        const response = await fetch('https://your-backend-proxy-url/gold-prices'); // Replace with your backend URL
         if (!response.ok) throw new Error('خطا در دریافت اطلاعات');
 
-        const text = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-
-        const targets = ["طلای 18 عیار / 750", "طلای 18 عیار / 740"];
-        targets.forEach(target => {
-            const th = Array.from(doc.querySelectorAll('th')).find(el => el.textContent.trim() === target);
-            goldPrices[target] = th?.nextElementSibling?.textContent.trim() || 'نامشخص';
-        });
-
+        const fetchedPrices = await response.json();
+        Object.assign(goldPrices, fetchedPrices); // Update goldPrices object
         localStorage.setItem('goldPrices', JSON.stringify(goldPrices)); // Cache prices
         displayPrices(goldPrices);
     } catch (error) {
@@ -131,6 +85,9 @@ async function fetchGoldPrices() {
     }
 }
 
+/**
+ * Display gold prices in the table.
+ */
 function displayPrices(data) {
     const table = document.getElementById('goldTable');
     table.innerHTML = '<tr><th>نوع طلا</th><th>قیمت (ریال)</th></tr>';
@@ -148,11 +105,3 @@ function displayPrices(data) {
 if (Object.keys(cachedPrices).length === 0) {
     fetchGoldPrices();
 }
-
-// سرویس کردن فایل index.html
-app.use(express.static('public'));
-
-// شروع سرور
-app.listen(port, () => {
-    console.log(`سرور روی پورت ${port} اجرا شده است.`);
-});
