@@ -1,3 +1,4 @@
+// script.js
 
 const goldPrices = {};
 let cachedPrices = {};
@@ -71,15 +72,18 @@ function calculateTotalPrice(weight, type) {
  */
 async function fetchGoldPrices() {
     try {
-        const response = await fetch('https://gold-calc.vercel.app/'); // Replace with your backend URL
-        if (!response.ok) throw new Error('خطا در دریافت اطلاعات');
+        console.log('Fetching gold prices...');
+        const response = await fetch('https://gold-calc.vercel.app/api/gold-prices');
+        console.log('Response status:', response.status);
+        if (!response.ok) throw new Error('Network response was not ok.');
 
         const fetchedPrices = await response.json();
+        console.log('Fetched prices:', fetchedPrices);
         Object.assign(goldPrices, fetchedPrices); // Update goldPrices object
         localStorage.setItem('goldPrices', JSON.stringify(goldPrices)); // Cache prices
         displayPrices(goldPrices);
     } catch (error) {
-        console.error('خطا در دریافت اطلاعات:', error);
+        console.error('Error fetching gold prices:', error);
         alert('خطا در بارگذاری قیمت‌ها. از قیمت‌های ذخیره شده استفاده می‌شود.');
     }
 }
