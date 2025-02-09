@@ -130,3 +130,14 @@ p.error {
     font-family: 'IRANSans';
     src: url('https://fonts.googleapis.com/css2?family=IRANSans&display=swap');
 }
+@font-face {
+    font-family: 'IRANSans';
+    src: url('/fonts/IRANSans-Regular.woff2') format('woff2'),
+         url('/fonts/IRANSans-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'IRANSans', sans-serif;
+}
