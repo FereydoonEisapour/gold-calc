@@ -35,20 +35,16 @@ function convertCarat() {
             </thead>
             <tbody>
                 <tr>
-                    <td>وزن طلای 24 عیار </td>
+                    <td>نسبت به وزن طلای 24 عیار </td>
                     <td>${totalWeight24} گرم</td>
                 </tr>
                 <tr>
-                    <td>وزن طلای 18 عیار </td>
+                    <td> نسبت به وزن طلای 18 عیار </td>
                     <td>${totalWeight18} گرم</td>
                 </tr>
                 <tr>
-                    <td>ارزش تقریبی طلای 24 عیار </td>
+                    <td>  ارزش تقریبی طلا  </td>
                     <td>${totalPrice24 || 'نامشخص'} تومان</td>
-                </tr>
-                <tr>
-                    <td>ارزش تقریبی طلای 18 عیار </td>
-                    <td>${totalPrice18 || 'نامشخص'} تومان</td>
                 </tr>
             </tbody>
         </table>
