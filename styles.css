@@ -1,12 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
 
 :root {
-    --primary-color: #ff6600;
-    --secondary-color: #ffcc00;
+    --primary-color: #d4af37; /* رنگ طلایی */
+    --secondary-color: #f7e8b7;
     --bg-gradient: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
     --text-color: #333;
-    --input-border-color: #ddd;
-    --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    --font-family: 'IRANSans', Tahoma, Arial, sans-serif;
+    --input-border-color: #ccc;
+    --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
 }
 
 body {
@@ -14,49 +15,65 @@ body {
     direction: rtl;
     text-align: center;
     margin: 0;
-    padding: 0;
+    padding: 20px;
     background: var(--bg-gradient);
     min-height: 100vh;
-    display: grid;
-    place-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
 }
 
 .container {
-    max-width: 90%;
+    max-width: 500px;
     width: 100%;
     background: rgba(255, 255, 255, 0.95);
     border-radius: 20px;
     box-shadow: var(--box-shadow);
-    padding: 20px;
+    padding: 25px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-h1 {
+h1, h2 {
     color: var(--text-color);
-    font-size: 24px;
     margin: 0;
-    font-weight: bold;
+    font-weight: 700;
+}
+
+h1 {
+    font-size: 24px;
+}
+
+h2 {
+    font-size: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
 }
 
-input[type="number"],
-button {
-    padding: 10px;
-    border: 2px solid var(--input-border-color);
+input[type="number"] {
+    padding: 12px;
+    border: 1px solid var(--input-border-color);
     border-radius: 8px;
-    font-size: 14px;
-    transition: border-color 0.3s ease, transform 0.2s ease;
+    font-size: 16px;
+    font-family: var(--font-family);
+    text-align: center;
 }
 
 button {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
     background-color: var(--primary-color);
     color: white;
     cursor: pointer;
@@ -64,80 +81,59 @@ button {
 }
 
 button:hover {
-    background-color: #cc5500;
+    background-color: #b39125; /* Darker gold */
     transform: translateY(-2px);
 }
 
 .result {
     font-size: 16px;
     color: var(--text-color);
-    background: #fff3cd;
-    padding: 10px;
-    border-radius: 8px;
+    min-height: 50px;
     animation: fadeIn 1s ease-in-out;
+}
+
+.result table {
+    margin-top: 10px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
     background: white;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-    animation: slideUp 1s ease-in-out;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+    animation: slideUp 0.8s ease-in-out;
 }
 
-th,
-td {
-    border: 1px solid var(--input-border-color);
-    padding: 10px;
+th, td {
+    border: 1px solid #e0e0e0;
+    padding: 12px;
     text-align: center;
 }
 
 th {
-    background-color: var(--primary-color);
+    background-color: #4a4a4a;
     color: white;
     font-weight: bold;
 }
 
 p.error {
-    color: red;
+    color: #d32f2f;
+    background-color: #ffebee;
+    border: 1px solid #d32f2f;
+    padding: 10px;
+    border-radius: 8px;
     font-size: 14px;
     margin: 10px 0;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes slideUp {
-    from {
-        transform: translateY(50px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
-@font-face {
-    font-family: 'IRANSans';
-    src: url('https://fonts.googleapis.com/css2?family=IRANSans&display=swap');
-}
-@font-face {
-    font-family: 'IRANSans';
-    src: url('/fonts/IRANSans-Regular.woff2') format('woff2'),
-         url('/fonts/IRANSans-Regular.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-}
 
-body {
-    font-family: 'IRANSans', sans-serif;
-}
