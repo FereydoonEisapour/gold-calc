@@ -1,11 +1,26 @@
+// --- GLOBAL STATE & CONSTANTS ---
+const HISTORY_KEY = 'goldCalcHistory';
+const MAX_HISTORY_ITEMS = 5;
+
+let lastUpdateTime = null;
+let priceUpdateInterval = null;
 
 const goldPrices = {
     "طلای 24 عیار": null,
     "طلای 18 عیار": null,
-    "دلار آمریکا": null, 
+    "دلار آمریکا": null,
 };
 
+// --- INITIALIZATION ---
+window.onload = function () {
+    const goldTable = document.getElementById('goldTable');
+    goldTable.innerHTML = '<tr><th>در حال بارگذاری قیمت‌ها  ...</th></tr>';
+    
+    loadHistory();
+    fetchPricesFromTgju();
+};
 
+// --- CORE CALCULATION LOGIC ---
 function convertCarat() {
     const weight = parseFloat(document.getElementById('weight').value);
     const carat = parseFloat(document.getElementById('carat').value);
@@ -52,8 +67,209 @@ function convertCarat() {
         </table>
     `;
     resultDiv.innerHTML = tableHTML;
+
+    // Save to history
+    saveCalculation({
+        weight,
+        carat,
+        resultHTML: tableHTML,
+        date: new Date().toISOString()
+    });
 }
 
+// --- HISTORY (LOCAL STORAGE) MANAGEMENT ---
+function loadHistory() {
+    const historyContainer = document.getElementById('history-container');
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    
+    if (history.length === 0) {
+        historyContainer.innerHTML = '<p>هنوز محاسبه‌ای ذخیره نشده است.</p>';
+        return;
+    }
+
+    historyContainer.innerHTML = ''; // Clear placeholder
+    history.forEach(item => renderHistoryItem(item, false));
+}
+
+function saveCalculation(calculationData) {
+    let history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    history.unshift(calculationData); // Add to the beginning
+    history = history.slice(0, MAX_HISTORY_ITEMS); // Keep only the last N items
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+
+    renderHistoryItem(calculationData, true); // Render the new item at the top
+}
+
+function renderHistoryItem(item, isNew) {
+    const historyContainer = document.getElementById('history-container');
+    if (historyContainer.querySelector('p')) {
+        historyContainer.innerHTML = ''; // Clear the 'no history' message
+    }
+
+    const historyItemDiv = document.createElement('div');
+    historyItemDiv.className = 'history-item';
+    
+    const formattedDate = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.date));
+
+    historyItemDiv.innerHTML = `
+        <div class="history-item-header">
+            <div>
+                <span>${item.weight}</span> گرم با عیار <span>${item.carat}</span>
+            </div>
+            <time datetime="${item.date}">${formattedDate}</time>
+        </div>
+        ${item.resultHTML}
+    `;
+
+    if (isNew) {
+        historyContainer.prepend(historyItemDiv);
+        const allItems = historyContainer.getElementsByClassName('history-item');
+        if (allItems.length > MAX_HISTORY_ITEMS) {
+            allItems[allItems.length - 1].remove(); // Remove the oldest item from the DOM
+        }
+    } else {
+        historyContainer.appendChild(historyItemDiv);
+    }
+}
+
+
+// --- PRICE FETCHING & DISPLAY ---
+async function fetchPricesFromTgju() {
+    const urls = {
+        geram18: 'https://www.tgju.org/profile/geram18',
+        geram24: 'https://www.tgju.org/profile/geram24',
+        dollar: 'https://www.tgju.org/profile/price_dollar_rl',
+    };
+
+    const priceSelector = "#main > div.stocks-profile > div.stocks-header > div.stocks-header-main > div > div.fs-cell.fs-xl-2.fs-lg-2.fs-md-6.fs-sm-6.fs-xs-6.top-header-item-block-3 > div > h3.line.clearfix > span.value > span:nth-child(1)";
+    const proxyUrl = (targetUrl) => `https://gold-proxy.epfereydoon.workers.dev/?url=${encodeURIComponent(targetUrl)}`;
+
+    try {
+        const [response18, response24, responseDollar] = await Promise.all([
+            fetch(proxyUrl(urls.geram18)),
+            fetch(proxyUrl(urls.geram24)),
+            fetch(proxyUrl(urls.dollar))
+        ]);
+
+        if (!response18.ok || !response24.ok || !responseDollar.ok) {
+            throw new Error(`پاسخ از پراکسی شما با خطا مواجه شد.`);
+        }
+
+        const [html18, html24, htmlDollar] = await Promise.all([
+            response18.text(),
+            response24.text(),
+            responseDollar.text()
+        ]);
+        
+        const parser = new DOMParser();
+        const doc18 = parser.parseFromString(html18, 'text/html');
+        const doc24 = parser.parseFromString(html24, 'text/html');
+        const docDollar = parser.parseFromString(htmlDollar, 'text/html');
+
+        const price18Element = doc18.querySelector(priceSelector);
+        const price24Element = doc24.querySelector(priceSelector);
+        const priceDollarElement = docDollar.querySelector(priceSelector);
+        
+        const price18RialString = price18Element ? price18Element.textContent.trim() : null;
+        if (price18RialString) {
+            goldPrices['طلای 18 عیار'] = cleanPrice(price18RialString) / 10;
+        }
+
+        const price24RialString = price24Element ? price24Element.textContent.trim() : null;
+        if(price24RialString) {
+            goldPrices['طلای 24 عیار'] = cleanPrice(price24RialString) / 10;
+        }
+
+        const priceDollarRialString = priceDollarElement ? priceDollarElement.textContent.trim() : null;
+        if (priceDollarRialString) {
+            goldPrices['دلار آمریکا'] = cleanPrice(priceDollarRialString) / 10;
+        }
+        
+        displayPrices(goldPrices);
+        
+        // Update timestamp and status
+        lastUpdateTime = new Date();
+        displayUpdateStatus();
+        startPriceStalenessChecker();
+
+    } catch (error) {
+        console.error("خطا در استخراج داده‌ها:", error);
+        document.getElementById('goldTable').innerHTML = '<tr><th class="error">خطا: استخراج قیمت‌ها ناموفق بود.</th></tr>';
+        document.getElementById('update-status-container').innerHTML = '<p class="error">امکان دریافت قیمت وجود ندارد.</p>';
+    }
+}
+
+function displayPrices(prices) {
+    const table = document.getElementById('goldTable');
+    table.innerHTML = '<thead><tr><th>نوع</th><th>قیمت (تومان)</th></tr></thead>';
+    const tbody = document.createElement('tbody');
+
+    Object.entries(prices).forEach(([type, price]) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = type;
+        row.insertCell(1).textContent = price ? formatterPrice(price) : 'نامشخص';
+    });
+    table.appendChild(tbody);
+}
+
+// --- UPDATE STATUS & REFRESH LOGIC ---
+function refreshPrices() {
+    const goldTable = document.getElementById('goldTable');
+    goldTable.innerHTML = '<tr><th>در حال به‌روزرسانی قیمت‌ها ...</th></tr>';
+    document.getElementById('update-status-container').innerHTML = '';
+    fetchPricesFromTgju();
+}
+
+function displayUpdateStatus() {
+    const container = document.getElementById('update-status-container');
+    if (!lastUpdateTime) {
+        container.innerHTML = '';
+        return;
+    }
+    const formattedTime = new Intl.DateTimeFormat('fa-IR', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+    }).format(lastUpdateTime);
+    
+    container.innerHTML = `
+        <div class="update-status">
+            <button onclick="refreshPrices()" class="refresh-button" title="دریافت قیمت جدید">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="refresh-icon">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                    <path d="M21 3v5h-5"></path>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                    <path d="M8 16H3v5"></path>
+                </svg>
+            </button>
+            <div class="time-text" id="time-text-container">
+                <span>آخرین به‌روزرسانی: ${formattedTime}</span>
+            </div>
+        </div>
+    `;
+}
+
+function startPriceStalenessChecker() {
+    if (priceUpdateInterval) clearInterval(priceUpdateInterval);
+    priceUpdateInterval = setInterval(checkPriceStaleness, 5000); // Check every 5s
+}
+
+function checkPriceStaleness() {
+    if (!lastUpdateTime) return;
+    
+    const now = new Date();
+    const diffSeconds = (now - lastUpdateTime) / 1000;
+
+    if (diffSeconds > 60) {
+        const container = document.getElementById('time-text-container');
+        if (container) {
+            container.innerHTML = '<span class="stale-prices">بیش از یک دقیقه از آخرین قیمت‌گیری گذشته، به‌روزرسانی کنید.</span>';
+        }
+        clearInterval(priceUpdateInterval); // Stop checking once it's stale
+    }
+}
+
+
+// --- UTILITY FUNCTIONS ---
 function formatterPrice(price) {
     if (price === null || isNaN(price)) return 'نامشخص';
     return new Intl.NumberFormat('fa-IR').format(price);
@@ -66,87 +282,4 @@ function isValidInput(weight, carat) {
 function cleanPrice(priceString) {
     if (!priceString) return null;
     return parseInt(priceString.replace(/,/g, ''));
-}
-
-
-
-window.onload = function () {
-    const goldTable = document.getElementById('goldTable');
-    goldTable.innerHTML = '<tr><th>در حال بارگذاری قیمت‌ها  ...</th></tr>';
-    fetchPricesFromTgju();
-};
-
-async function fetchPricesFromTgju() {
-    const urls = {
-        geram18: 'https://www.tgju.org/profile/geram18',
-        geram24: 'https://www.tgju.org/profile/geram24',
-        dollar: 'https://www.tgju.org/profile/price_dollar_rl', // جدید: URL دلار
-    };
-
-
-    const priceSelector = "#main > div.stocks-profile > div.stocks-header > div.stocks-header-main > div > div.fs-cell.fs-xl-2.fs-lg-2.fs-md-6.fs-sm-6.fs-xs-6.top-header-item-block-3 > div > h3.line.clearfix > span.value > span:nth-child(1)";
-
-    try {
-        const proxyUrl = (targetUrl) => `https://gold-proxy.epfereydoon.workers.dev/?url=${encodeURIComponent(targetUrl)}`;
-
-
-        const [response18, response24, responseDollar] = await Promise.all([
-            fetch(proxyUrl(urls.geram18)),
-            fetch(proxyUrl(urls.geram24)),
-            fetch(proxyUrl(urls.dollar))
-        ]);
-
-        if (!response18.ok || !response24.ok || !responseDollar.ok) {
-            throw new Error(`پاسخ از پراکسی شما با خطا مواجه شد.`);
-        }
-
-        const html18 = await response18.text();
-        const html24 = await response24.text();
-        const htmlDollar = await responseDollar.text(); 
-        
-        const parser = new DOMParser();
-        const doc18 = parser.parseFromString(html18, 'text/html');
-        const doc24 = parser.parseFromString(html24, 'text/html');
-        const docDollar = parser.parseFromString(htmlDollar, 'text/html'); 
-
-        const price18Element = doc18.querySelector(priceSelector);
-        const price24Element = doc24.querySelector(priceSelector);
-        const priceDollarElement = docDollar.querySelector(priceSelector); 
-        
-        const price18RialString = price18Element ? price18Element.textContent.trim() : null;
-        if (price18RialString) {
-            goldPrices['طلای 18 عیار'] = cleanPrice(price18RialString) / 10;
-        }
-
-        const price24RialString = price24Element ? price24Element.textContent.trim() : null;
-        if(price24RialString) {
-            goldPrices['طلای 24 عیار'] = cleanPrice(price24RialString) / 10;
-        }
-
-
-        const priceDollarRialString = priceDollarElement ? priceDollarElement.textContent.trim() : null;
-        if (priceDollarRialString) {
-            goldPrices['دلار آمریکا'] = cleanPrice(priceDollarRialString) / 10;
-        }
-        
-        displayPrices(goldPrices);
-
-    } catch (error) {
-        console.error("خطا در استخراج داده‌ها:", error);
-        document.getElementById('goldTable').innerHTML = '<tr><th class="error">خطا: استخراج قیمت‌ها ناموفق بود.</th></tr>';
-    }
-}
-
-
-function displayPrices(prices) {
-    const table = document.getElementById('goldTable');
-    table.innerHTML = '<thead><tr><th>نوع</th><th>قیمت (تومان)</th></tr></thead>';
-    const tbody = document.createElement('tbody');
-
-    Object.entries(prices).forEach(([type, price]) => {
-        const row = tbody.insertRow();
-        row.insertCell(0).textContent = type;
-        row.insertCell(1).textContent = price ? formatterPrice(price) + ' تومان' : 'نامشخص';
-    });
-    table.appendChild(tbody);
 }
