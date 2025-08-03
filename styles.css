@@ -1,14 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
 
 :root {
-    --primary-color: #d4af37; 
+    --primary-color: #d4af37;
     --secondary-color: #f7e8b7;
-    --bg-color: #f4f7f6; /* A calmer background */
+    --bg-color: #f4f7f6;
     --text-color: #333;
     --text-light-color: #666;
     --input-border-color: #ccc;
     --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
     --font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+    --danger-color: #d32f2f;
 }
 
 body {
@@ -41,14 +42,13 @@ header h1 {
 
 .main-content {
     display: grid;
-    grid-template-columns: 1fr; /* Default to single column */
+    grid-template-columns: 1fr;
     gap: 25px;
 }
 
-/* Desktop Grid Layout */
 @media (min-width: 992px) {
     .main-content {
-        grid-template-columns: 2fr 1fr; /* Calculator takes more space */
+        grid-template-columns: 2fr 1fr;
     }
     .calculator-section {
       display: flex;
@@ -103,7 +103,7 @@ button {
 }
 
 button:hover {
-    background-color: #b39125; /* Darker gold */
+    background-color: #b39125;
     transform: translateY(-2px);
 }
 
@@ -123,7 +123,7 @@ table {
     border-collapse: collapse;
     background: white;
     border-radius: 8px;
-    overflow: hidden; /* For rounded corners on table */
+    overflow: hidden;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
     animation: slideUp 0.8s ease-in-out;
 }
@@ -141,16 +141,15 @@ th {
 }
 
 p.error {
-    color: #d32f2f;
+    color: var(--danger-color);
     background-color: #ffebee;
-    border: 1px solid #d32f2f;
+    border: 1px solid var(--danger-color);
     padding: 10px;
     border-radius: 8px;
     font-size: 14px;
     margin: 10px 0;
 }
 
-/* Update Status Styles */
 #update-status-container {
     padding-bottom: 15px;
 }
@@ -190,12 +189,11 @@ p.error {
 }
 
 .stale-prices {
-    color: #d97706; /* amber-600 ish */
+    color: #d97706;
     font-weight: bold;
     animation: pulse 1.5s infinite;
 }
 
-/* History Styles */
 #history-container {
     display: flex;
     flex-direction: column;
@@ -208,6 +206,7 @@ p.error {
     border-radius: 8px;
     padding: 15px;
     animation: fadeIn 0.5s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .history-item-header {
@@ -223,7 +222,30 @@ p.error {
     color: var(--text-color);
 }
 
-/* Footer Styles */
+/* NEW STYLES for history item actions */
+.history-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.delete-history-btn {
+    background: none;
+    border: none;
+    color: #a0a0a0;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    padding: 0 5px;
+    font-weight: bold;
+    transition: color 0.2s ease;
+}
+
+.delete-history-btn:hover {
+    color: var(--danger-color);
+}
+
+
 footer {
     text-align: center;
     margin-top: 30px;
@@ -240,7 +262,6 @@ footer {
     50% { opacity: 0.7; }
 }
 
-/* Small adjustments for mobile */
 @media (max-width: 480px) {
     header h1 { font-size: 24px; }
     h2 { font-size: 20px; }
