@@ -15,23 +15,52 @@
             <h1>محاسبه‌گر قیمت طلای آبشده</h1>
         </header>
 
-        <!-- UPDATED: main structure is now flat -->
         <main class="main-content">
-            
-            <!-- Calculator Card -->
+
             <div class="card" id="calculator-card">
-                <h2>محاسبه ارزش طلا</h2>
-                <div class="form-group">
-                    <input type="number" min="0" step="any" id="weight" placeholder="وزن طلا (مثال: 12.54 گرم)">
-                    <input type="number" min="0" max="1000" id="carat" placeholder="عیار طلا (مثال: 750 یا 900)">
-                    <button onclick="convertCarat()">محاسبه کن</button>
+                <div class="calculator-tabs">
+                    <button id="auto-mode-btn" class="tab-button">محاسبه ارزش طلا</button>
+                    <button id="manual-mode-btn" class="tab-button">ماشین حساب</button>
                 </div>
+
+                <div id="auto-price-calculator" class="hidden">
+                    <div class="form-group">
+                        <input type="text" id="weight-auto" class="calc-input" inputmode="decimal"
+                            placeholder="وزن طلا (مثال: 12.54 گرم)">
+                        <div id="weight-auto-error" class="error-message"></div>
+
+                        <input type="text" id="carat-auto" class="calc-input" inputmode="decimal"
+                            placeholder="عیار طلا (مثال: 750 یا 900)">
+                        <div id="carat-auto-error" class="error-message"></div>
+
+                        <!-- UPDATED: Added the 'disabled' attribute -->
+                        <button id="calculate-auto-btn" disabled>محاسبه با قیمت لحظه‌ای</button>
+                    </div>
+                </div>
+
+                <div id="manual-price-calculator" class="hidden">
+                    <div class="form-group">
+                        <input type="text" id="weight-manual" class="calc-input" inputmode="decimal"
+                            placeholder="وزن طلا (مثال: 12.54 گرم)">
+                        <div id="weight-manual-error" class="error-message"></div>
+
+                        <input type="text" id="carat-manual" class="calc-input" inputmode="decimal"
+                            placeholder="عیار طلا (مثال: 750 یا 900)">
+                        <div id="carat-manual-error" class="error-message"></div>
+
+                        <input type="text" id="price-manual" class="calc-input" inputmode="decimal"
+                            placeholder="قیمت هر گرم طلای ۱۸ عیار (تومان)">
+                        <div id="price-manual-error" class="error-message"></div>
+
+                        <button id="calculate-manual-btn">محاسبه با قیمت دستی</button>
+                    </div>
+                </div>
+
                 <div class="result" id="result">
-                    <p>برای مشاهده نتیجه، وزن و عیار را وارد کرده و روی دکمه محاسبه کلیک کنید.</p>
+                    <p>برای مشاهده نتیجه، اطلاعات را وارد کرده و روی دکمه محاسبه کلیک کنید.</p>
                 </div>
             </div>
 
-            <!-- History Card -->
             <div class="card" id="history-card">
                 <h2>محاسبات قبلی</h2>
                 <div id="history-container">
@@ -39,19 +68,15 @@
                 </div>
             </div>
 
-            <!-- Prices Card -->
             <div class="prices-section card" id="prices-card">
                 <h2>قیمت لحظه‌ای طلا و دلار</h2>
-                <div id="update-status-container">
-                    <!-- JS will populate this -->
-                </div>
+                <div id="update-status-container"></div>
                 <table id="goldTable"></table>
             </div>
-
         </main>
 
         <footer>
-            <p>محاسبه‌گر طلای آب‌شده - تمامی قیمت‌ها تقریبی هستند و برای اطلاعات دقیق‌تر با واحد مربوطه تماس بگیرید.</p>
+            <p>محاسبه‌گر طلای آب‌شده - تمامی قیمت‌ها تقریبی هستند .</p>
         </footer>
     </div>
     <script src="./script.js"></script>
