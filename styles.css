@@ -1,25 +1,65 @@
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
 
+/* --- 1. Root & Global Styles --- */
 :root {
     --primary-color: #d4af37;
-    --secondary-color: #f7e8b7;
     --bg-color: #f4f7f6;
+    --card-bg-color: #fff;
     --text-color: #333;
     --text-light-color: #666;
-    --input-border-color: #ccc;
-    --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-    --font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+    --border-color: #e0e0e0;
     --danger-color: #d32f2f;
+    --warning-color: #d97706;
+
+    --font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+    --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    --border-radius-md: 15px;
+    --border-radius-sm: 8px;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
     font-family: var(--font-family);
     direction: rtl;
-    margin: 0;
     background-color: var(--bg-color);
     color: var(--text-color);
+    line-height: 1.6;
 }
 
+
+/* --- 2. Typography --- */
+h1, h2 {
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+h1 {
+    font-size: 28px;
+}
+
+h2 {
+    font-size: 22px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+
+/* --- 3. Layout --- */
 #app-wrapper {
     max-width: 1200px;
     margin: 0 auto;
@@ -33,33 +73,33 @@ header {
     border-bottom: 2px solid var(--primary-color);
 }
 
-header h1 {
-    color: var(--text-color);
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0;
+footer {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    font-size: 14px;
+    color: var(--text-light-color);
 }
 
+/* Main content layout: Mobile-first ordering */
 .main-content {
     display: grid;
     grid-template-columns: 1fr;
     gap: 25px;
 }
 
-@media (min-width: 992px) {
-    .main-content {
-        grid-template-columns: 2fr 1fr;
-    }
-    .calculator-section {
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
-    }
-}
+#calculator-card { order: 1; }
+#prices-card { order: 2; }
+#history-card { order: 3; }
 
+
+/* --- 4. Components --- */
+
+/* Card Component */
 .card {
-    background: white;
-    border-radius: 15px;
+    background: var(--card-bg-color);
+    border-radius: var(--border-radius-md);
     box-shadow: var(--box-shadow);
     padding: 25px;
     display: flex;
@@ -67,14 +107,7 @@ header h1 {
     gap: 20px;
 }
 
-h2 {
-    font-size: 22px;
-    margin: 0;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #eee;
-    font-weight: 700;
-}
-
+/* Form Elements */
 .form-group {
     display: flex;
     flex-direction: column;
@@ -83,77 +116,56 @@ h2 {
 
 input[type="number"] {
     padding: 12px;
-    border: 1px solid var(--input-border-color);
-    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
     font-size: 16px;
     font-family: var(--font-family);
     text-align: center;
+    width: 100%;
 }
 
+/* Button Component */
 button {
     padding: 12px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius-sm);
     font-size: 16px;
     font-weight: 700;
     background-color: var(--primary-color);
-    color: white;
+    color: var(--card-bg-color);
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 button:hover {
-    background-color: #b39125;
+    background-color: #b39125; /* Darker gold */
     transform: translateY(-2px);
 }
 
-.result {
-    font-size: 16px;
-    color: var(--text-color);
-    min-height: 50px;
-    animation: fadeIn 1s ease-in-out;
-}
-
-.result table {
-    margin-top: 10px;
-}
-
-table {
+/* Table Component (used in result, prices, and history) */
+.card table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
-    border-radius: 8px;
+    background: var(--card-bg-color);
+    border-radius: var(--border-radius-sm);
     overflow: hidden;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
     animation: slideUp 0.8s ease-in-out;
 }
 
-th, td {
+.card th, .card td {
     border: 1px solid #e0e0e0;
     padding: 12px;
     text-align: center;
 }
 
-th {
+.card th {
     background-color: #4a4a4a;
-    color: white;
+    color: var(--card-bg-color);
     font-weight: bold;
 }
 
-p.error {
-    color: var(--danger-color);
-    background-color: #ffebee;
-    border: 1px solid var(--danger-color);
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 14px;
-    margin: 10px 0;
-}
-
-#update-status-container {
-    padding-bottom: 15px;
-}
-
+/* Update Status Component */
 .update-status {
     display: flex;
     align-items: center;
@@ -162,15 +174,11 @@ p.error {
 
 .refresh-button {
     background: none;
-    border: none;
     color: var(--primary-color);
-    cursor: pointer;
     padding: 5px;
     border-radius: 50%;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.2s ease;
 }
 
 .refresh-button:hover {
@@ -188,22 +196,11 @@ p.error {
     color: var(--text-light-color);
 }
 
-.stale-prices {
-    color: #d97706;
-    font-weight: bold;
-    animation: pulse 1.5s infinite;
-}
-
-#history-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
+/* History Item Component */
 .history-item {
     background-color: #fafafa;
     border: 1px solid #eee;
-    border-radius: 8px;
+    border-radius: var(--border-radius-sm);
     padding: 15px;
     animation: fadeIn 0.5s ease;
     transition: opacity 0.3s ease, transform 0.3s ease;
@@ -217,12 +214,12 @@ p.error {
     color: var(--text-light-color);
     margin-bottom: 10px;
 }
+
 .history-item-header span {
     font-weight: bold;
     color: var(--text-color);
 }
 
-/* NEW STYLES for history item actions */
 .history-item-actions {
     display: flex;
     align-items: center;
@@ -231,28 +228,35 @@ p.error {
 
 .delete-history-btn {
     background: none;
-    border: none;
     color: #a0a0a0;
-    cursor: pointer;
     font-size: 24px;
     line-height: 1;
     padding: 0 5px;
     font-weight: bold;
-    transition: color 0.2s ease;
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .delete-history-btn:hover {
     color: var(--danger-color);
+    background-color: transparent; /* Override main button hover */
 }
 
 
-footer {
-    text-align: center;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #e0e0e0;
+/* --- 5. Utilities & Animations --- */
+.error {
+    color: var(--danger-color);
+    background-color: #ffebee;
+    border: 1px solid var(--danger-color);
+    padding: 10px;
+    border-radius: var(--border-radius-sm);
     font-size: 14px;
-    color: var(--text-light-color);
+    margin: 10px 0;
+}
+
+.stale-prices {
+    color: var(--warning-color);
+    font-weight: bold;
+    animation: pulse 1.5s infinite;
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -262,8 +266,36 @@ footer {
     50% { opacity: 0.7; }
 }
 
+
+/* --- 6. Media Queries --- */
+
+/* Desktop Layout */
+@media (min-width: 992px) {
+    .main-content {
+        grid-template-columns: 2fr 1fr;
+        grid-template-areas:
+            "calculator prices"
+            "history    prices";
+    }
+
+    /* Reset mobile order and assign to grid areas */
+    #calculator-card { 
+        grid-area: calculator;
+        order: initial;
+    }
+    #history-card { 
+        grid-area: history;
+        order: initial;
+    }
+    #prices-card { 
+        grid-area: prices; 
+        order: initial;
+    }
+}
+
+/* Small device adjustments */
 @media (max-width: 480px) {
-    header h1 { font-size: 24px; }
+    h1 { font-size: 24px; }
     h2 { font-size: 20px; }
     .card { padding: 15px; }
 }
