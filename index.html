@@ -15,38 +15,43 @@
             <h1>محاسبه‌گر قیمت طلای آبشده</h1>
         </header>
 
+        <!-- UPDATED: main structure is now flat -->
         <main class="main-content">
-            <div class="calculator-section">
-                <div class="card">
-                    <h2>محاسبه ارزش طلا</h2>
-                    <div class="form-group">
-                        <input type="number" min="0" step="any" id="weight" placeholder="وزن طلا (مثال: 12.54 گرم)">
-                        <input type="number" min="0" max="1000" id="carat" placeholder="عیار طلا (مثال: 750 یا 900)">
-                        <button onclick="convertCarat()">محاسبه کن</button>
-                    </div>
-                    <div class="result" id="result">
-                        <p>برای مشاهده نتیجه، وزن و عیار را وارد کرده و روی دکمه محاسبه کلیک کنید.</p>
-                    </div>
+            
+            <!-- Calculator Card -->
+            <div class="card" id="calculator-card">
+                <h2>محاسبه ارزش طلا</h2>
+                <div class="form-group">
+                    <input type="number" min="0" step="any" id="weight" placeholder="وزن طلا (مثال: 12.54 گرم)">
+                    <input type="number" min="0" max="1000" id="carat" placeholder="عیار طلا (مثال: 750 یا 900)">
+                    <button onclick="convertCarat()">محاسبه کن</button>
                 </div>
-                <div class="card">
-                    <h2>محاسبات قبلی</h2>
-                    <div id="history-container">
-                        <p>هنوز محاسبه‌ای انجام نشده است.</p>
-                    </div>
+                <div class="result" id="result">
+                    <p>برای مشاهده نتیجه، وزن و عیار را وارد کرده و روی دکمه محاسبه کلیک کنید.</p>
                 </div>
             </div>
 
-            <div class="prices-section card">
+            <!-- History Card -->
+            <div class="card" id="history-card">
+                <h2>محاسبات قبلی</h2>
+                <div id="history-container">
+                    <p>هنوز محاسبه‌ای انجام نشده است.</p>
+                </div>
+            </div>
+
+            <!-- Prices Card -->
+            <div class="prices-section card" id="prices-card">
                 <h2>قیمت لحظه‌ای طلا و دلار</h2>
                 <div id="update-status-container">
                     <!-- JS will populate this -->
                 </div>
                 <table id="goldTable"></table>
             </div>
+
         </main>
 
         <footer>
-            <p>محاسبه‌گر طلای آب‌شده - تمامی قیمت‌ها تقریبی هستند و برای اطلاعات دقیق‌تر با واحد های مربوطه تماس بگیرید.</p>
+            <p>محاسبه‌گر طلای آب‌شده - تمامی قیمت‌ها تقریبی هستند و برای اطلاعات دقیق‌تر با واحد مربوطه تماس بگیرید.</p>
         </footer>
     </div>
     <script src="./script.js"></script>
