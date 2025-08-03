@@ -1,26 +1,30 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قیمت طلا</title>
+    <title>محاسبه‌گر قیمت طلا</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
     <div class="container">
-        <h1>تبدیل طلای آبشده</h1>
+        <h1>محاسبه‌گر قیمت طلای آبشده</h1>
         <div class="form-group">
-            <input type="number" min="0.1" id="weight" placeholder="وزن طلا (گرم)">
-            <input type="number" min="1" id="carat" placeholder="عیار طلا ( 873, 916)">
+            <input type="number" min="0" step="any" id="weight" placeholder="وزن طلا (مثال: 12.54 گرم)">
+            <input type="number" min="0" max="1000" id="carat" placeholder="عیار طلا (مثال: 750 یا 900)">
             <button onclick="convertCarat()">محاسبه کن</button>
         </div>
-        <div class="result" id="result"></div>
-        <h2>قیمت طلا</h2>
-        <table id="goldTable" style="display: none;"></table>
+        <div class="result" id="result">
+             <p>برای مشاهده نتیجه، وزن و عیار را وارد کرده و روی دکمه محاسبه کلیک کنید.</p>
+        </div>
+        
+        <h2>قیمت لحظه‌ای طلا و دلار</h2>
+        <table id="goldTable"></table>
     </div>
 
+    <script src="./script.js"></script>
 </body>
-<script src="./script.js"></script>
+
 </html>
