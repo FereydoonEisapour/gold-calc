@@ -15,7 +15,7 @@ const goldPrices = {
 window.onload = function () {
     const goldTable = document.getElementById('goldTable');
     goldTable.innerHTML = '<tr><th>در حال بارگذاری قیمت‌ها  ...</th></tr>';
-    
+
     loadHistory();
     fetchPricesFromTgju();
 };
@@ -68,7 +68,6 @@ function convertCarat() {
     `;
     resultDiv.innerHTML = tableHTML;
 
-    // Save to history
     saveCalculation({
         weight,
         carat,
@@ -81,42 +80,49 @@ function convertCarat() {
 function loadHistory() {
     const historyContainer = document.getElementById('history-container');
     const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-    
+
     if (history.length === 0) {
         historyContainer.innerHTML = '<p>هنوز محاسبه‌ای ذخیره نشده است.</p>';
         return;
     }
 
-    historyContainer.innerHTML = ''; // Clear placeholder
+    historyContainer.innerHTML = '';
     history.forEach(item => renderHistoryItem(item, false));
 }
 
 function saveCalculation(calculationData) {
     let history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-    history.unshift(calculationData); // Add to the beginning
-    history = history.slice(0, MAX_HISTORY_ITEMS); // Keep only the last N items
+    history.unshift(calculationData);
+    history = history.slice(0, MAX_HISTORY_ITEMS);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 
-    renderHistoryItem(calculationData, true); // Render the new item at the top
+    renderHistoryItem(calculationData, true);
 }
 
 function renderHistoryItem(item, isNew) {
     const historyContainer = document.getElementById('history-container');
     if (historyContainer.querySelector('p')) {
-        historyContainer.innerHTML = ''; // Clear the 'no history' message
+        historyContainer.innerHTML = '';
     }
 
     const historyItemDiv = document.createElement('div');
     historyItemDiv.className = 'history-item';
-    
-    const formattedDate = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.date));
+    historyItemDiv.setAttribute('data-id', item.date);
+
+    const formattedDate = new Intl.DateTimeFormat('fa-IR', {
+        dateStyle: 'short',
+        timeStyle: 'short'
+    }).format(new Date(item.date));
 
     historyItemDiv.innerHTML = `
         <div class="history-item-header">
             <div>
                 <span>${item.weight}</span> گرم با عیار <span>${item.carat}</span>
             </div>
-            <time datetime="${item.date}">${formattedDate}</time>
+            <div class="history-item-actions">
+                 <time datetime="${item.date}">${formattedDate}</time>
+                 <button onclick="deleteHistoryItem('${item.date}')" class="delete-history-btn" title="حذف این محاسبه">×</button>
+            </div>
         </div>
         ${item.resultHTML}
     `;
@@ -125,13 +131,28 @@ function renderHistoryItem(item, isNew) {
         historyContainer.prepend(historyItemDiv);
         const allItems = historyContainer.getElementsByClassName('history-item');
         if (allItems.length > MAX_HISTORY_ITEMS) {
-            allItems[allItems.length - 1].remove(); // Remove the oldest item from the DOM
+            allItems[allItems.length - 1].remove();
         }
     } else {
         historyContainer.appendChild(historyItemDiv);
     }
 }
 
+function deleteHistoryItem(id) {
+    let history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    const updatedHistory = history.filter(item => item.date !== id);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
+
+    const elementToDelete = document.querySelector(`.history-item[data-id="${id}"]`);
+    if (elementToDelete) {
+        elementToDelete.remove();
+    }
+    
+    const historyContainer = document.getElementById('history-container');
+    if (updatedHistory.length === 0) {
+        historyContainer.innerHTML = '<p>هنوز محاسبه‌ای ذخیره نشده است.</p>';
+    }
+}
 
 // --- PRICE FETCHING & DISPLAY ---
 async function fetchPricesFromTgju() {
@@ -187,7 +208,6 @@ async function fetchPricesFromTgju() {
         
         displayPrices(goldPrices);
         
-        // Update timestamp and status
         lastUpdateTime = new Date();
         displayUpdateStatus();
         startPriceStalenessChecker();
@@ -199,18 +219,33 @@ async function fetchPricesFromTgju() {
     }
 }
 
+// UPDATED: This function is changed to match your requested format.
 function displayPrices(prices) {
     const table = document.getElementById('goldTable');
     table.innerHTML = '<thead><tr><th>نوع</th><th>قیمت (تومان)</th></tr></thead>';
     const tbody = document.createElement('tbody');
 
+    // A map to convert internal keys to user-friendly display names
+    const displayNameMap = {
+        "طلای 24 عیار": "یک گرم طلای 24 عیار",
+        "طلای 18 عیار": "یک گرم طلای 18 عیار",
+        "دلار آمریکا": "یک دلار آمریکا"
+    };
+
     Object.entries(prices).forEach(([type, price]) => {
         const row = tbody.insertRow();
-        row.insertCell(0).textContent = type;
-        row.insertCell(1).textContent = price ? formatterPrice(price) : 'نامشخص';
+        
+        // Use the map to get the display name, or fall back to the original key
+        const displayName = displayNameMap[type] || type;
+        row.insertCell(0).textContent = displayName;
+
+        const priceText = price ? formatterPrice(price) : 'نامشخص';
+        row.insertCell(1).textContent = priceText;
     });
+
     table.appendChild(tbody);
 }
+
 
 // --- UPDATE STATUS & REFRESH LOGIC ---
 function refreshPrices() {
@@ -250,7 +285,7 @@ function displayUpdateStatus() {
 
 function startPriceStalenessChecker() {
     if (priceUpdateInterval) clearInterval(priceUpdateInterval);
-    priceUpdateInterval = setInterval(checkPriceStaleness, 5000); // Check every 5s
+    priceUpdateInterval = setInterval(checkPriceStaleness, 5000);
 }
 
 function checkPriceStaleness() {
@@ -264,7 +299,7 @@ function checkPriceStaleness() {
         if (container) {
             container.innerHTML = '<span class="stale-prices">بیش از یک دقیقه از آخرین قیمت‌گیری گذشته، به‌روزرسانی کنید.</span>';
         }
-        clearInterval(priceUpdateInterval); // Stop checking once it's stale
+        clearInterval(priceUpdateInterval);
     }
 }
 
