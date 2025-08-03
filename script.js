@@ -1,32 +1,34 @@
+
 const goldPrices = {
-    "طلای 24 عیار  ": '',
-    "طلای 18 عیار  ": '',
-    "دلار": '',
+    "طلای 24 عیار": null,
+    "طلای 18 عیار": null,
+    "دلار آمریکا": null, 
 };
 
-const goldWeight = {
-    "طلای 24 عیار  ": '',
-    "طلای 18 عیار  ": '',
-};
 
 function convertCarat() {
     const weight = parseFloat(document.getElementById('weight').value);
     const carat = parseFloat(document.getElementById('carat').value);
+    const resultDiv = document.getElementById('result');
 
     if (!isValidInput(weight, carat)) {
-        document.getElementById('result').innerHTML = '<p class="error">ورودی‌ها نامعتبر هستند!</p>';
+        resultDiv.innerHTML = '<p class="error">لطفاً وزن و عیار را به درستی وارد کنید!</p>';
         return;
     }
 
     const totalWeight24 = ((carat * weight) / 1000).toFixed(3);
     const totalWeight18 = ((carat * weight) / 750).toFixed(3);
 
-    const totalPrice24 = formatterPrice((totalWeight24 * goldPrices["طلای 24 عیار  "]).toFixed(0));
-    const totalPrice18 = formatterPrice((totalWeight18 * goldPrices["طلای 18 عیار  "]).toFixed(0));
+    const price18Toman = goldPrices["طلای 18 عیار"];
+    let finalValueFormatted = 'قیمت ۱۸ عیار هنوز دریافت نشده است.';
 
-    // ساخت جدول برای نمایش خروجی
+    if (price18Toman) {
+        const finalValue = totalWeight18 * price18Toman;
+        finalValueFormatted = formatterPrice(finalValue.toFixed(0)) + ' تومان';
+    }
+
     const tableHTML = `
-        <table border="1" cellpadding="10" style="border-collapse: collapse;">
+        <table style="width: 100%;">
             <thead>
                 <tr>
                     <th>عنوان</th>
@@ -35,81 +37,116 @@ function convertCarat() {
             </thead>
             <tbody>
                 <tr>
-                    <td>نسبت به وزن طلای 24 عیار </td>
+                    <td>نسبت به وزن طلای 24 عیار</td>
                     <td>${totalWeight24} گرم</td>
                 </tr>
                 <tr>
-                    <td> نسبت به وزن طلای 18 عیار </td>
+                    <td>نسبت به وزن طلای 18 عیار</td>
                     <td>${totalWeight18} گرم</td>
                 </tr>
                 <tr>
-                    <td>  ارزش تقریبی طلا  </td>
-                    <td>${totalPrice24 || 'نامشخص'} تومان</td>
+                    <td>ارزش تقریبی طلا</td>
+                    <td><b>${finalValueFormatted}</b></td>
                 </tr>
             </tbody>
         </table>
     `;
-
-    document.getElementById('result').innerHTML = tableHTML;
+    resultDiv.innerHTML = tableHTML;
 }
 
 function formatterPrice(price) {
-    formatter = new Intl.NumberFormat('fa-IR', { currency: 'IRR', });
-
-    return formatter.format(price); // خروجی 2,500,000 
+    if (price === null || isNaN(price)) return 'نامشخص';
+    return new Intl.NumberFormat('fa-IR').format(price);
 }
+
 function isValidInput(weight, carat) {
     return !isNaN(weight) && !isNaN(carat) && weight > 0 && carat > 0 && carat <= 1000;
 }
 
+function cleanPrice(priceString) {
+    if (!priceString) return null;
+    return parseInt(priceString.replace(/,/g, ''));
+}
+
+
+
 window.onload = function () {
-    fetchGoldPrices();
+    const goldTable = document.getElementById('goldTable');
+    goldTable.innerHTML = '<tr><th>در حال بارگذاری قیمت‌ها  ...</th></tr>';
+    fetchPricesFromTgju();
 };
 
-async function fetchGoldPrices() {
-    try {
-        const response = await fetch('https://brsapi.ir/FreeTsetmcBourseApi/Api_Free_Gold_Currency.json');
+async function fetchPricesFromTgju() {
+    const urls = {
+        geram18: 'https://www.tgju.org/profile/geram18',
+        geram24: 'https://www.tgju.org/profile/geram24',
+        dollar: 'https://www.tgju.org/profile/price_dollar_rl', // جدید: URL دلار
+    };
 
-        if (!response.ok) {
-            throw new Error(`Error fetching data: ${response.status} ${response.statusText}`);
+
+    const priceSelector = "#main > div.stocks-profile > div.stocks-header > div.stocks-header-main > div > div.fs-cell.fs-xl-2.fs-lg-2.fs-md-6.fs-sm-6.fs-xs-6.top-header-item-block-3 > div > h3.line.clearfix > span.value > span:nth-child(1)";
+
+    try {
+        const proxyUrl = (targetUrl) => `https://gold-proxy.epfereydoon.workers.dev/?url=${encodeURIComponent(targetUrl)}`;
+
+
+        const [response18, response24, responseDollar] = await Promise.all([
+            fetch(proxyUrl(urls.geram18)),
+            fetch(proxyUrl(urls.geram24)),
+            fetch(proxyUrl(urls.dollar))
+        ]);
+
+        if (!response18.ok || !response24.ok || !responseDollar.ok) {
+            throw new Error(`پاسخ از پراکسی شما با خطا مواجه شد.`);
         }
 
-        const data = await response.json();
-        extractGoldPrices(data);
+        const html18 = await response18.text();
+        const html24 = await response24.text();
+        const htmlDollar = await responseDollar.text(); 
+        
+        const parser = new DOMParser();
+        const doc18 = parser.parseFromString(html18, 'text/html');
+        const doc24 = parser.parseFromString(html24, 'text/html');
+        const docDollar = parser.parseFromString(htmlDollar, 'text/html'); 
+
+        const price18Element = doc18.querySelector(priceSelector);
+        const price24Element = doc24.querySelector(priceSelector);
+        const priceDollarElement = docDollar.querySelector(priceSelector); 
+        
+        const price18RialString = price18Element ? price18Element.textContent.trim() : null;
+        if (price18RialString) {
+            goldPrices['طلای 18 عیار'] = cleanPrice(price18RialString) / 10;
+        }
+
+        const price24RialString = price24Element ? price24Element.textContent.trim() : null;
+        if(price24RialString) {
+            goldPrices['طلای 24 عیار'] = cleanPrice(price24RialString) / 10;
+        }
+
+
+        const priceDollarRialString = priceDollarElement ? priceDollarElement.textContent.trim() : null;
+        if (priceDollarRialString) {
+            goldPrices['دلار آمریکا'] = cleanPrice(priceDollarRialString) / 10;
+        }
+        
+        displayPrices(goldPrices);
+
     } catch (error) {
-        console.error("خطا در دریافت داده‌ها:", error);
+        console.error("خطا در استخراج داده‌ها:", error);
+        document.getElementById('goldTable').innerHTML = '<tr><th class="error">خطا: استخراج قیمت‌ها ناموفق بود.</th></tr>';
     }
 }
 
-function extractGoldPrices(data) {
-    const gram18kGold = data.gold.find(item => item.name === "گرم طلای 18 عیار");
-    const gram24kGold = data.gold.find(item => item.name === "گرم طلای 24 عیار");
-    const usdCurrency = data.currency.find(item => item.name === "دلار");
 
-    if (gram18kGold) {
-        goldPrices['طلای 18 عیار  '] = gram18kGold.price;
-    }
-
-    if (gram24kGold) {
-        goldPrices['طلای 24 عیار  '] = gram24kGold.price;
-    }
-
-    if (usdCurrency) {
-        goldPrices["دلار"] = usdCurrency.price;
-    }
-
-    displayPrices(goldPrices);
-}
-
-function displayPrices(goldPrices) {
+function displayPrices(prices) {
     const table = document.getElementById('goldTable');
-    table.innerHTML = '<tr><th>نوع طلا</th><th>قیمت (تومان)</th></tr>';
+    table.innerHTML = '<thead><tr><th>نوع</th><th>قیمت (تومان)</th></tr></thead>';
+    const tbody = document.createElement('tbody');
 
-    Object.entries(goldPrices).forEach(([type, price]) => {
-        const row = table.insertRow();
+    Object.entries(prices).forEach(([type, price]) => {
+        const row = tbody.insertRow();
         row.insertCell(0).textContent = type;
-        row.insertCell(1).textContent = formatterPrice(price) || 'نامشخص';
+        row.insertCell(1).textContent = price ? formatterPrice(price) + ' تومان' : 'نامشخص';
     });
-
-    table.style.display = 'table';
+    table.appendChild(tbody);
 }
