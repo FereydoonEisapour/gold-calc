@@ -25,12 +25,14 @@
         <main class="main-content">
 
             <div class="card" id="calculator-card">
-                <!-- Calculator content remains the same -->
-                 <div class="calculator-tabs">
-                    <button id="auto-mode-btn" class="tab-button">محاسبه ارزش طلا</button>
+                <!-- UPDATED: Made "auto" mode the default active tab -->
+                <div class="calculator-tabs">
+                    <button id="auto-mode-btn" class="tab-button active-tab">محاسبه ارزش طلا</button>
                     <button id="manual-mode-btn" class="tab-button">ماشین حساب</button>
                 </div>
-                <div id="auto-price-calculator" class="hidden">
+
+                <!-- UPDATED: Removed 'hidden' class to make it visible by default -->
+                <div id="auto-price-calculator">
                     <div class="form-group">
                         <label for="weight-auto">وزن طلا (گرم)</label>
                         <input type="text" id="weight-auto" class="calc-input" inputmode="decimal" placeholder="مثال: 12.54">
@@ -45,6 +47,8 @@
                         <button id="calculate-auto-btn" disabled>محاسبه با قیمت لحظه‌ای</button>
                     </div>
                 </div>
+
+                <!-- This form remains hidden by default -->
                 <div id="manual-price-calculator" class="hidden">
                     <div class="form-group">
                         <label for="weight-manual">وزن طلا (گرم)</label>
@@ -65,6 +69,7 @@
                         <button id="calculate-manual-btn" disabled>محاسبه با قیمت دستی</button>
                     </div>
                 </div>
+
                 <div class="result" id="result">
                     <p>برای مشاهده نتیجه، اطلاعات را وارد کرده و روی دکمه محاسبه کلیک کنید.</p>
                 </div>
@@ -80,7 +85,6 @@
                 </div>
             </div>
 
-            <!-- NEW: Total Profit/Loss Card -->
             <div class="card" id="total-profit-loss-card">
                 <h2>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20V16"/></svg>
