@@ -13,6 +13,9 @@
 <body>
     <canvas id="particle-canvas"></canvas>
 
+    <!-- NEW: Container for toast notifications -->
+    <div id="toast-container"></div>
+
     <div id="app-wrapper">
         <header>
             <h1>محاسبه‌گر قیمت طلای آبشده</h1>
@@ -25,13 +28,11 @@
         <main class="main-content">
 
             <div class="card" id="calculator-card">
-                <!-- UPDATED: Made "auto" mode the default active tab -->
                 <div class="calculator-tabs">
                     <button id="auto-mode-btn" class="tab-button active-tab">محاسبه ارزش طلا</button>
                     <button id="manual-mode-btn" class="tab-button">ماشین حساب</button>
                 </div>
 
-                <!-- UPDATED: Removed 'hidden' class to make it visible by default -->
                 <div id="auto-price-calculator">
                     <div class="form-group">
                         <label for="weight-auto">وزن طلا (گرم)</label>
@@ -43,12 +44,17 @@
                         <input type="text" id="carat-auto" class="calc-input" inputmode="decimal" placeholder="مثال: 750 (حداکثر 1000)">
                         <div id="carat-auto-error" class="error-message"></div>
                     </div>
+                    <!-- NEW: Commission Input Field -->
+                    <div class="form-group">
+                        <label for="commission-auto">اجرت/کارمزد (درصد)</label>
+                        <input type="text" id="commission-auto" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 7">
+                        <div id="commission-auto-error" class="error-message"></div>
+                    </div>
                     <div class="form-group">
                         <button id="calculate-auto-btn" disabled>محاسبه با قیمت لحظه‌ای</button>
                     </div>
                 </div>
 
-                <!-- This form remains hidden by default -->
                 <div id="manual-price-calculator" class="hidden">
                     <div class="form-group">
                         <label for="weight-manual">وزن طلا (گرم)</label>
@@ -59,6 +65,12 @@
                         <label for="carat-manual">عیار طلا</label>
                         <input type="text" id="carat-manual" class="calc-input" inputmode="decimal" placeholder="مثال: 750 (حداکثر 1000)">
                         <div id="carat-manual-error" class="error-message"></div>
+                    </div>
+                     <!-- NEW: Commission Input Field -->
+                    <div class="form-group">
+                        <label for="commission-manual">اجرت/کارمزد (درصد)</label>
+                        <input type="text" id="commission-manual" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 7">
+                        <div id="commission-manual-error" class="error-message"></div>
                     </div>
                     <div class="form-group">
                         <label for="price-manual">قیمت هر گرم طلای ۱۸ عیار (تومان)</label>
@@ -86,9 +98,14 @@
             </div>
 
             <div class="card" id="total-profit-loss-card">
-                <h2>
+                <h2 class="with-tooltip">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20V16"/></svg>
                     خلاصه سود و زیان
+                    <!-- NEW: Tooltip -->
+                    <span class="tooltip-trigger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span class="tooltip-text">این مبلغ، تفاوت ارزش کل محاسبات ذخیره شده شما با ارزش لحظه‌ای آن‌ها را نمایش می‌دهد.</span>
+                    </span>
                 </h2>
                 <div id="total-profit-loss-container">
                     <p>موردی برای محاسبه وجود ندارد.</p>
