@@ -106,13 +106,18 @@ function calculateAuto() {
 
     const totalWeight18 = ((carat * weight) / 750).toFixed(3);
     const price18Toman = goldPrices["طلای 18 عیار"];
+    let finalValue = 0;
     let finalValueFormatted = 'قیمت ۱۸ عیار هنوز دریافت نشده است.';
+
     if (price18Toman) {
-        finalValueFormatted = formatterPrice((totalWeight18 * price18Toman).toFixed(0)) + ' تومان';
+        finalValue = totalWeight18 * price18Toman;
+        finalValueFormatted = formatterPrice(finalValue.toFixed(0)) + ' تومان';
     }
+
     const tableHTML = createResultTable(`با قیمت لحظه‌ای (هر گرم طلای ۱۸ عیار: ${formatterPrice(price18Toman) || 'نامشخص'} تومان)`, totalWeight18, finalValueFormatted);
     resultDiv.innerHTML = tableHTML;
-    saveCalculation({ weight, carat, resultHTML: tableHTML, date: new Date().toISOString() });
+    // UPDATED: Save the numeric 'finalValue' for future profit/loss calculation
+    saveCalculation({ weight, carat, resultHTML: tableHTML, originalValue: finalValue, date: new Date().toISOString() });
 }
 
 function calculateManual() {
@@ -146,7 +151,8 @@ function calculateManual() {
     const finalValueFormatted = formatterPrice(finalValue.toFixed(0)) + ' تومان';
     const tableHTML = createResultTable(`با قیمت دستی (هر گرم طلای ۱۸ عیار: ${formatterPrice(manualPrice)} تومان)`, totalWeight18, finalValueFormatted);
     resultDiv.innerHTML = tableHTML;
-    saveCalculation({ weight, carat, resultHTML: tableHTML, date: new Date().toISOString() });
+    // UPDATED: Save the numeric 'finalValue' for future profit/loss calculation
+    saveCalculation({ weight, carat, resultHTML: tableHTML, originalValue: finalValue, date: new Date().toISOString() });
 }
 
 function createResultTable(calculationType, weight18, value) {
@@ -185,6 +191,29 @@ function renderHistoryItem(item) {
     const historyItemDiv = document.createElement('div');
     historyItemDiv.className = 'history-item';
     historyItemDiv.setAttribute('data-id', item.date);
+    
+    // NEW: Profit/Loss Calculation Logic
+    let profitLossHTML = '';
+    const currentPrice18Toman = goldPrices["طلای 18 عیار"];
+    // Check if we have the original value and a current price to compare against
+    if (currentPrice18Toman && item.originalValue > 0) {
+        const totalWeight18 = ((item.carat * item.weight) / 750);
+        const currentValue = totalWeight18 * currentPrice18Toman;
+        const profitLoss = currentValue - item.originalValue;
+        
+        const isProfit = profitLoss >= 0;
+        const cssClass = isProfit ? 'profit' : 'loss';
+        const sign = isProfit ? '+' : '';
+        const formattedProfitLoss = formatterPrice(Math.abs(profitLoss).toFixed(0));
+
+        profitLossHTML = `
+            <div class="profit-loss-container">
+                <span>سود/زیان لحظه‌ای: </span>
+                <span class="${cssClass}">${sign}${formattedProfitLoss} تومان</span>
+            </div>
+        `;
+    }
+
     const formattedDate = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.date));
     historyItemDiv.innerHTML = `
         <div class="history-item-header">
@@ -194,7 +223,8 @@ function renderHistoryItem(item) {
                  <button onclick="deleteHistoryItem('${item.date}')" class="delete-history-btn" title="حذف این محاسبه">×</button>
             </div>
         </div>
-        ${item.resultHTML}`;
+        ${item.resultHTML}
+        ${profitLossHTML}`; // Append the profit/loss section here
     historyContainer.appendChild(historyItemDiv);
 }
 
@@ -229,7 +259,9 @@ async function fetchPricesFromTgju() {
         displayUpdateStatus();
         startPriceStalenessChecker();
 
-        // Enable the button only if prices are successfully fetched
+        // NEW: Reload history to show profit/loss after fetching prices
+        loadHistory(); 
+        
         if (goldPrices['طلای 18 عیار']) {
             autoCalcButton.disabled = false;
         }
@@ -238,7 +270,7 @@ async function fetchPricesFromTgju() {
         console.error("خطا در استخراج داده‌ها:", error);
         document.getElementById('goldTable').innerHTML = '<tr><th class="error">خطا: استخراج قیمت‌ها ناموفق بود.</th></tr>';
         document.getElementById('update-status-container').innerHTML = '<p class="error">امکان دریافت قیمت وجود ندارد.</p>';
-        autoCalcButton.disabled = true; // Keep it disabled on error
+        autoCalcButton.disabled = true;
     }
 }
 
@@ -257,7 +289,7 @@ function displayPrices(prices) {
 
 // --- UPDATE STATUS & REFRESH LOGIC ---
 function refreshPrices() {
-    autoCalcButton.disabled = true; // Disable button immediately on refresh
+    autoCalcButton.disabled = true;
     document.getElementById('goldTable').innerHTML = '<tr><th>در حال به‌روزرسانی قیمت‌ها...</th></tr>';
     document.getElementById('update-status-container').innerHTML = '';
     fetchPricesFromTgju();
