@@ -1,126 +1,153 @@
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap');
 
 /* --- 1. Root & Global Styles --- */
 :root {
+    /* Light Mode (Default) */
     --primary-color: #d4af37;
-    --bg-color: #f4f7f6;
+    --primary-gradient: linear-gradient(145deg, #e7c35a, #d4af37);
+    --bg-color: #f0f2f5;
     --card-bg-color: #fff;
-    --text-color: #333;
-    --text-light-color: #666;
-    --border-color: #e0e0e0;
-    --danger-color: #d32f2f;
-    --success-color: #2e7d32; /* NEW: Success color for profit */
-    --warning-color: #d97706;
-    --disabled-bg-color: #e0e0e0;
-    --disabled-text-color: #9e9e9e;
+    --text-color: #2c3e50;
+    --text-light-color: #7f8c8d;
+    --border-color: #e8e8e8;
+    --danger-color: #c0392b;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --disabled-bg-color: #ecf0f1;
+    --disabled-text-color: #bdc3c7;
     --font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
-    --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-    --border-radius-md: 15px;
-    --border-radius-sm: 8px;
+    --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+    --border-radius-md: 16px;
+    --border-radius-sm: 10px;
+
+    /* Dark Mode Variables */
+    --bg-color-dark: #1c1d20;
+    --card-bg-color-dark: #2a2c30;
+    --text-color-dark: #e8eaed;
+    --text-light-color-dark: #9aa0a6;
+    --border-color-dark: #4d5154;
+}
+
+body.dark-mode {
+    --bg-color: var(--bg-color-dark);
+    --card-bg-color: var(--card-bg-color-dark);
+    --text-color: var(--text-color-dark);
+    --text-light-color: var(--text-light-color-dark);
+    --border-color: var(--border-color-dark);
+    --disabled-bg-color: #3c4043;
+    --disabled-text-color: #80868b;
+    --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+#particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background-color: var(--bg-color);
+    transition: background-color 0.3s;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
-body { font-family: var(--font-family); direction: rtl; background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
+body { font-family: var(--font-family); direction: rtl; color: var(--text-color); line-height: 1.7; transition: color 0.3s; }
 
 /* --- 2. Typography --- */
-h1, h2 { font-weight: 700; line-height: 1.2; }
-h1 { font-size: 28px; }
-h2 { font-size: 22px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+h1, h2 { font-weight: 800; line-height: 1.3; }
+h1 { font-size: 30px; }
+h2 { font-size: 22px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; }
+h2 svg { color: var(--primary-color); }
 
 /* --- 3. Layout --- */
-#app-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; }
-header { text-align: center; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 2px solid var(--primary-color); }
-footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 14px; color: var(--text-light-color); }
+#app-wrapper { max-width: 1200px; margin: 0 auto; padding: 25px; position: relative; z-index: 1; }
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 25px;
+    margin-bottom: 25px;
+    border-bottom: 3px solid var(--primary-color);
+}
+footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 14px; color: var(--text-light-color); }
 
 .main-content { display: grid; grid-template-columns: 1fr; gap: 25px; }
 #calculator-card { order: 1; }
-#prices-card { order: 2; }
-#history-card { order: 3; }
+#prices-card { order: 4; } /* UPDATED: Order changed */
+#history-card { order: 2; }
+#total-profit-loss-card { order: 3; } /* UPDATED: Order changed */
+
 
 /* --- 4. Components --- */
-.card { background: var(--card-bg-color); border-radius: var(--border-radius-md); box-shadow: var(--box-shadow); padding: 25px; display: flex; flex-direction: column; gap: 20px; }
+.card { background: var(--card-bg-color); border-radius: var(--border-radius-md); box-shadow: var(--box-shadow); padding: 25px; display: flex; flex-direction: column; gap: 20px; transition: background-color 0.3s; }
 
-/* Calculator Tabs */
-.calculator-tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
-.tab-button { background: none; color: var(--text-light-color); padding: 10px 15px; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-size: 16px; font-weight: 700; transition: color 0.3s ease, border-color 0.3s ease; }
-.tab-button:hover { color: var(--text-color); }
-.tab-button.active-tab { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-
-/* Form Elements */
-.form-group { display: flex; flex-direction: column; gap: 5px; }
-.calc-input { padding: 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 16px; font-family: var(--font-family); width: 100%; transition: border-color 0.2s ease, box-shadow 0.2s ease; direction: ltr; text-align: center; }
-.calc-input.input-error { border-color: var(--danger-color); box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.2); }
-.error-message { color: var(--danger-color); font-size: 13px; min-height: 18px; text-align: center; padding-right: 5px; margin-bottom: 10px; }
-.form-group button { margin-top: 5px; padding: 12px; border: none; border-radius: var(--border-radius-sm); font-size: 16px; font-weight: 700; background-color: var(--primary-color); color: var(--card-bg-color); cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; }
-.form-group button:hover { background-color: #b39125; transform: translateY(-2px); }
-
-.form-group button:disabled,
-.form-group button:disabled:hover {
-    background-color: var(--disabled-bg-color);
-    color: var(--disabled-text-color);
-    cursor: not-allowed;
-    transform: none;
+#theme-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light-color);
+    transition: all 0.3s;
+}
+#theme-toggle-btn:hover {
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--text-color);
+    transform: rotate(15deg);
 }
 
-/* Table Component */
-.card table { width: 100%; border-collapse: collapse; background: var(--card-bg-color); border-radius: var(--border-radius-sm); overflow: hidden; box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05); animation: slideUp 0.8s ease-in-out; }
-.card th, .card td { border: 1px solid #e0e0e0; padding: 12px; text-align: center; }
-.card th { background-color: #4a4a4a; color: var(--card-bg-color); font-weight: bold; }
+/* ... other component styles are unchanged ... */
+.calculator-tabs{display:flex;gap:10px;border-bottom:1px solid var(--border-color);margin-bottom:20px}.tab-button{background:none;color:var(--text-light-color);padding:10px 15px;border:none;border-bottom:3px solid transparent;cursor:pointer;font-size:16px;font-weight:700;transition:color .3s ease,border-color .3s ease}.tab-button.active-tab{color:var(--primary-color);border-bottom-color:var(--primary-color)}.form-group{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}.form-group label{font-size:14px;font-weight:500;color:var(--text-light-color)}.calc-input{padding:14px;border:1px solid var(--border-color);border-radius:var(--border-radius-sm);font-size:16px;font-family:var(--font-family);width:100%;transition:all .2s ease;direction:ltr;text-align:center;background-color:#fdfdfd}.calc-input:focus{border-color:var(--primary-color);box-shadow:0 0 0 3px rgba(212,175,55,.15);outline:none}.calc-input.input-error{border-color:var(--danger-color);box-shadow:0 0 0 3px rgba(192,57,43,.15)}.error-message{color:var(--danger-color);font-size:13px;min-height:18px;text-align:right;padding-right:5px}.form-group button{padding:14px;border:none;border-radius:var(--border-radius-sm);font-size:18px;font-weight:700;background:var(--primary-gradient);color:#fff;cursor:pointer;transition:all .3s ease}.form-group button:hover{transform:translateY(-3px);box-shadow:0 4px 15px rgba(212,175,55,.4)}.form-group button:disabled,.form-group button:disabled:hover{background:var(--disabled-bg-color);color:var(--disabled-text-color);cursor:not-allowed;transform:none;box-shadow:none}.result{padding-top:15px;border-top:1px dashed var(--border-color)}.result b{font-size:20px;font-weight:800;color:var(--primary-color)}.card table{width:100%;border-collapse:collapse}.card th,.card td{padding:14px;text-align:center;border-bottom:1px solid var(--border-color)}.card th{background-color:#f8f9fa;color:var(--text-light-color);font-weight:500;font-size:14px}.card tr:last-child td{border-bottom:none}.price-value{font-weight:700;font-size:16px}.price-change{font-size:13px;font-weight:700;direction:ltr;display:inline-block}.price-change.up{color:var(--success-color)}.price-change.down{color:var(--danger-color)}.price-change .arrow{display:inline-block;margin-left:4px}.history-item{background-color:#fdfdfd;border:1px solid #f0f0f0;border-radius:var(--border-radius-sm);padding:12px;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;gap:2px 10px;align-items:center;margin-top:5px;transition:background-color .3s,border-color .3s}.history-item-header{grid-column:1 / 2;font-size:15px;display:flex;justify-content:space-between}.history-item-header .spec{font-weight:700}.history-item-details{grid-column:1 / 3;font-size:13px;color:var(--text-light-color);padding-top:8px;margin-top:8px;border-top:1px dashed var(--border-color)}.history-item-details b{color:var(--text-color);font-weight:700}.history-item-actions{grid-column:2 / 3;grid-row:1 / 2;display:flex;align-items:center;gap:5px}.history-action-btn{background:none;border:1px solid transparent;color:#a0a0a0;cursor:pointer;padding:4px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s ease}.history-action-btn:hover{color:var(--text-color);background-color:#f0f0f0}.delete-history-btn:hover{color:var(--danger-color);background-color:#fce8e6}.history-item-header :nth-child(2){padding-top:4px}.history-item-details :nth-child(1){padding-left:5px}.profit-loss-value{font-size:16px;font-weight:800}.profit-loss-value.profit{color:var(--success-color)}.profit-loss-value.loss{color:var(--danger-color)}
 
-/* Update Status Component */
-.update-status { display: flex; align-items: center; justify-content: space-between; }
-.refresh-button { background: none; border: none; color: var(--primary-color); cursor: pointer; padding: 5px; border-radius: 50%; display: flex; transition: background-color 0.2s, transform 0.2s ease; }
-.refresh-button:hover { background-color: #f0f0f0; }
-.refresh-icon { width: 20px; height: 20px; }
-.time-text { margin-right: 8px; font-size: 14px; color: var(--text-light-color); }
-
-/* History Item Component */
-.history-item {
-    margin-bottom: 5px;
-    background-color: #fafafa; border: 1px solid #eee; border-radius: var(--border-radius-sm); padding: 15px; animation: fadeIn 0.5s ease; transition: opacity 0.3s ease, transform 0.3s ease; }
-.history-item-header { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text-light-color); margin-bottom: 10px; }
-.history-item-header span { font-weight: bold; color: var(--text-color); }
-.history-item-actions { display: flex; align-items: center; gap: 10px; }
-.delete-history-btn { background: none; border: none; color: #a0a0a0; cursor: pointer; font-size: 24px; line-height: 1; padding: 0 5px; font-weight: bold; transition: color 0.2s ease, transform 0.2s ease; }
-.delete-history-btn:hover { color: var(--danger-color); }
-
-/* NEW: Styles for Profit/Loss Section in History */
-.profit-loss-container {
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px dashed var(--border-color);
-    font-size: 14px;
+/* NEW: Total Profit/Loss Display Styles */
+#total-profit-loss-container {
     text-align: center;
+    padding: 10px 0;
+}
+.total-profit-loss-display {
+    font-size: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.total-profit-loss-display .label {
+    font-size: 16px;
     color: var(--text-light-color);
 }
-.profit-loss-container .profit {
-    color: var(--success-color);
-    font-weight: 700;
-}
-.profit-loss-container .loss {
-    color: var(--danger-color);
-    font-weight: 700;
+.total-profit-loss-display .profit-loss-value {
+    font-size: 28px; /* Larger font size for emphasis */
 }
 
+/* Dark Mode specific styles */
+body.dark-mode .calc-input{background-color:#3c4043;color:var(--text-color-dark);border-color:var(--border-color-dark)}body.dark-mode .card th{background-color:#373a3d}body.dark-mode .history-item{background-color:#3c4043;border-color:var(--border-color-dark)}body.dark-mode .history-action-btn:hover{background-color:#4a4d50}body.dark-mode .delete-history-btn:hover{color:var(--danger-color);background-color:#5c2b29}body.dark-mode .history-item-details b{color:var(--text-color-dark)}body.dark-mode .flash-up{animation:flash-green-dark 1.5s ease-out}body.dark-mode .flash-down{animation:flash-red-dark 1.5s ease-out}
 
-/* --- 5. Utilities & Animations --- */
-.hidden { display: none !important; }
-.error { color: var(--danger-color); background-color: #ffebee; border: 1px solid var(--danger-color); padding: 10px; border-radius: var(--border-radius-sm); font-size: 14px; margin: 10px 0; }
-.stale-prices { color: var(--warning-color); font-weight: bold; animation: pulse 1.5s infinite; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+/* Utilities & Animations */
+.hidden{display:none!important}.stale-prices{color:var(--warning-color);font-weight:bold;animation:pulse 1.5s infinite}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}@keyframes flash-green{0%{background-color:#e8f5e9}100%{background-color:transparent}}@keyframes flash-red{0%{background-color:#fbe9e7}100%{background-color:transparent}}@keyframes flash-green-dark{0%{background-color:#38523a}100%{background-color:transparent}}@keyframes flash-red-dark{0%{background-color:#5c2b29}100%{background-color:transparent}}
 
-/* --- 6. Media Queries --- */
+/* Media Queries */
 @media (min-width: 992px) {
-    .main-content { grid-template-columns: 2fr 1fr; grid-template-areas: "calculator prices" "history    prices"; }
-    #calculator-card { grid-area: calculator; order: initial; }
-    #history-card { grid-area: history; order: initial; }
-    #prices-card { grid-area: prices; order: initial; align-self: start; }
+    /* UPDATED: Grid layout with new card */
+    .main-content {
+        grid-template-columns: 1.5fr 1fr;
+        grid-template-areas:
+            "calculator prices"
+            "history    prices"
+            "total-pl   prices"; /* Added new area */
+        grid-template-rows: auto auto 1fr; /* Adjust rows */
+    }
+    #calculator-card { grid-area: calculator; }
+    #history-card { grid-area: history; }
+    #total-profit-loss-card { grid-area: total-pl; } /* Assign to grid area */
+    #prices-card { grid-area: prices; align-self: start; }
 }
 @media (max-width: 480px) {
-    h1 { font-size: 24px; }
-    h2 { font-size: 20px; }
-    .card { padding: 15px; }
+    h1 { font-size: 20px; }
+    h2 { font-size: 18px; }
+    .card { padding: 20px; }
 }
