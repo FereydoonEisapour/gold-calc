@@ -6,77 +6,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#d4af37">
     <title>محاسبه‌گر قیمت طلا</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FAD961;'/%3E%3Cstop offset='100%25' style='stop-color:%23D4AF37;'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23a)' d='M85,15 L15,15 C12.24,15 10,17.24 10,20 L10,80 C10,82.76 12.24,85 15,85 L85,85 C87.76,85 90,82.76 90,80 L90,20 C90,17.24 87.76,15 85,15 z M80,75 L20,75 L20,25 L80,25 L80,75 z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
+    <canvas id="particle-canvas"></canvas>
+
     <div id="app-wrapper">
         <header>
             <h1>محاسبه‌گر قیمت طلای آبشده</h1>
+            <button id="theme-toggle-btn" title="تغییر حالت شب/روز">
+                <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg id="theme-icon-moon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
         </header>
 
         <main class="main-content">
 
             <div class="card" id="calculator-card">
-                <div class="calculator-tabs">
+                <!-- Calculator content remains the same -->
+                 <div class="calculator-tabs">
                     <button id="auto-mode-btn" class="tab-button">محاسبه ارزش طلا</button>
                     <button id="manual-mode-btn" class="tab-button">ماشین حساب</button>
                 </div>
-
                 <div id="auto-price-calculator" class="hidden">
                     <div class="form-group">
-                        <input type="text" id="weight-auto" class="calc-input" inputmode="decimal"
-                            placeholder="وزن طلا (مثال: 12.54 گرم)">
+                        <label for="weight-auto">وزن طلا (گرم)</label>
+                        <input type="text" id="weight-auto" class="calc-input" inputmode="decimal" placeholder="مثال: 12.54">
                         <div id="weight-auto-error" class="error-message"></div>
-
-                        <input type="text" id="carat-auto" class="calc-input" inputmode="decimal"
-                            placeholder="عیار طلا (مثال: 750 یا 900)">
+                    </div>
+                    <div class="form-group">
+                        <label for="carat-auto">عیار طلا</label>
+                        <input type="text" id="carat-auto" class="calc-input" inputmode="decimal" placeholder="مثال: 750 (حداکثر 1000)">
                         <div id="carat-auto-error" class="error-message"></div>
-
-                        <!-- UPDATED: Added the 'disabled' attribute -->
+                    </div>
+                    <div class="form-group">
                         <button id="calculate-auto-btn" disabled>محاسبه با قیمت لحظه‌ای</button>
                     </div>
                 </div>
-
                 <div id="manual-price-calculator" class="hidden">
                     <div class="form-group">
-                        <input type="text" id="weight-manual" class="calc-input" inputmode="decimal"
-                            placeholder="وزن طلا (مثال: 12.54 گرم)">
+                        <label for="weight-manual">وزن طلا (گرم)</label>
+                        <input type="text" id="weight-manual" class="calc-input" inputmode="decimal" placeholder="مثال: 12.54">
                         <div id="weight-manual-error" class="error-message"></div>
-
-                        <input type="text" id="carat-manual" class="calc-input" inputmode="decimal"
-                            placeholder="عیار طلا (مثال: 750 یا 900)">
+                    </div>
+                    <div class="form-group">
+                        <label for="carat-manual">عیار طلا</label>
+                        <input type="text" id="carat-manual" class="calc-input" inputmode="decimal" placeholder="مثال: 750 (حداکثر 1000)">
                         <div id="carat-manual-error" class="error-message"></div>
-
-                        <input type="text" id="price-manual" class="calc-input" inputmode="decimal"
-                            placeholder="قیمت هر گرم طلای ۱۸ عیار (تومان)">
+                    </div>
+                    <div class="form-group">
+                        <label for="price-manual">قیمت هر گرم طلای ۱۸ عیار (تومان)</label>
+                        <input type="text" id="price-manual" class="calc-input" inputmode="decimal" placeholder="مثال: 3,450,000">
                         <div id="price-manual-error" class="error-message"></div>
-
-                        <button id="calculate-manual-btn">محاسبه با قیمت دستی</button>
+                    </div>
+                    <div class="form-group">
+                        <button id="calculate-manual-btn" disabled>محاسبه با قیمت دستی</button>
                     </div>
                 </div>
-
                 <div class="result" id="result">
                     <p>برای مشاهده نتیجه، اطلاعات را وارد کرده و روی دکمه محاسبه کلیک کنید.</p>
                 </div>
             </div>
 
             <div class="card" id="history-card">
-                <h2>محاسبات قبلی</h2>
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m18.7 12.3-1.2-1.2a2 2 0 0 0-2.8 0L9.4 16.4a2 2 0 0 0 0 2.8l1.2 1.2a2 2 0 0 0 2.8 0l5.3-5.3a2 2 0 0 0 0-2.8z"/><path d="M9 13h-2"/><path d="M6 10h-2"/><path d="M3 7h8"/></svg>
+                    محاسبات قبلی
+                </h2>
                 <div id="history-container">
                     <p>هنوز محاسبه‌ای انجام نشده است.</p>
                 </div>
             </div>
 
+            <!-- NEW: Total Profit/Loss Card -->
+            <div class="card" id="total-profit-loss-card">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20V16"/></svg>
+                    خلاصه سود و زیان
+                </h2>
+                <div id="total-profit-loss-container">
+                    <p>موردی برای محاسبه وجود ندارد.</p>
+                </div>
+            </div>
+
             <div class="prices-section card" id="prices-card">
-                <h2>قیمت لحظه‌ای طلا و دلار</h2>
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    قیمت لحظه‌ای طلا و دلار
+                </h2>
                 <div id="update-status-container"></div>
                 <table id="goldTable"></table>
             </div>
         </main>
 
         <footer>
-            <p>محاسبه‌گر طلای آب‌شده - تمامی قیمت‌ها تقریبی هستند .</p>
+            <p>محاسبه‌گر طلای آب‌شده - تمامی قیمت‌ها تقریبی هستند.</p>
         </footer>
     </div>
     <script src="./script.js"></script>
