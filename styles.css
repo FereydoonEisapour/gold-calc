@@ -179,7 +179,7 @@ main {
   gap: 0.625rem;
   border-bottom: 1px solid var(--border-color);
   margin-bottom: 1rem;
-  flex-wrap: wrap;
+  flex-wrap: wrap; /* Default behavior for larger screens */
 }
 #converter-mode-btn {
   margin-right: auto;
@@ -237,7 +237,6 @@ main {
   direction: ltr;
   text-align: center;
 }
-/* Added styling for history search */
 #history-search-input {
   text-align: right;
   direction: rtl;
@@ -633,25 +632,31 @@ main {
   display: none !important;
 }
 
-body.dark-mode .calc-input,
-body.dark-mode .form-control {
-  background-color: #3c4043;
-  color: var(--text-color-dark);
-  border-color: var(--border-color-dark);
-}
-body.dark-mode .tooltip-text {
-  background-color: #f0f2f5;
-  color: #2c3e50;
-}
-body.dark-mode .toast {
-  background-color: var(--card-bg-color);
-  color: var(--text-color-dark);
-}
+/* --- 5. Media Queries & Responsive Design --- */
 
 @media (max-width: 991px) {
   #converter-mode-btn {
     margin-right: 0;
   }
+
+  /* === START: Mobile Tab Fix === */
+  .calculator-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .calculator-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-button {
+    flex-shrink: 0;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  /* === END: Mobile Tab Fix === */
 }
 
 @media (min-width: 992px) {
@@ -685,7 +690,6 @@ body.dark-mode .toast {
   h2 {
     font-size: 1.1rem;
   }
-  /* Improved UX: Reduced padding on small screens */
   .card {
     padding: 1rem;
   }
