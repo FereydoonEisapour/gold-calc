@@ -31,10 +31,7 @@ const moonIcon = document.getElementById('theme-icon-moon');
 const totalProfitLossContainer = document.getElementById('total-profit-loss-container');
 const toastContainer = document.getElementById('toast-container');
 const converterValueInput = document.getElementById('converter-value');
-const fromUnitSelect = document.getElementById('from-unit');
-const toUnitSelect = document.getElementById('to-unit');
 const converterResultDiv = document.getElementById('converter-result');
-const calculatorTabs = document.querySelector('.calculator-tabs');
 const modal = document.getElementById('confirmation-modal');
 const modalMessage = document.getElementById('modal-message');
 const modalConfirmBtn = document.getElementById('modal-confirm-btn');
@@ -51,16 +48,18 @@ window.onload = function () {
     priceTable.innerHTML = '<tr><td colspan="2">در حال بارگذاری قیمت‌ها...</td></tr>';
     loadHistory();
     fetchPricesFromTgju();
-    updateFormVisibility('auto');
+    switchCalculatorMode('auto');
     validateForm(autoCalcForm, autoCalcButton, false);
     handleConversion();
 };
 
 function setupEventListeners() {
     themeToggleButton.addEventListener('click', toggleTheme);
-    document.getElementById('auto-mode-btn').addEventListener('click', () => switchCalculatorMode('auto'));
-    document.getElementById('manual-mode-btn').addEventListener('click', () => switchCalculatorMode('manual'));
-    document.getElementById('converter-mode-btn').addEventListener('click', () => switchCalculatorMode('converter'));
+    
+    // Main tabs
+    document.getElementById('radio-1').addEventListener('change', () => switchCalculatorMode('auto'));
+    document.getElementById('radio-2').addEventListener('change', () => switchCalculatorMode('manual'));
+    document.getElementById('radio-3').addEventListener('change', () => switchCalculatorMode('converter'));
 
     autoCalcButton.addEventListener('click', () => calculateAuto(true));
     manualCalcButton.addEventListener('click', () => calculateManual(true));
@@ -71,7 +70,7 @@ function setupEventListeners() {
     document.querySelectorAll('.calc-input, .form-control').forEach(input => {
         input.addEventListener('input', (event) => {
             const form = event.target.closest('div[role="tabpanel"]');
-            if (form.id.includes('converter')) return;
+            if (!form || form.id.includes('converter')) return;
             if (event.target.id.includes('price-manual')) formatNumberInput(event.target);
             const button = form.querySelector('button[id^="calculate-"]');
             validateForm(form, button, false);
@@ -89,19 +88,22 @@ function setupEventListeners() {
         }
     });
 
-    calculatorTabs.addEventListener('keydown', (event) => {
-        const tabs = Array.from(calculatorTabs.querySelectorAll('.tab-button'));
-        const activeTabIndex = tabs.findIndex(tab => tab.classList.contains('active-tab'));
-        let newIndex = activeTabIndex;
-        if (event.key === 'ArrowRight') newIndex = (activeTabIndex + 1) % tabs.length;
-        else if (event.key === 'ArrowLeft') newIndex = (activeTabIndex - 1 + tabs.length) % tabs.length;
-        if (newIndex !== activeTabIndex) { event.preventDefault(); tabs[newIndex].focus(); tabs[newIndex].click(); }
+    // Add listeners for new carat tabs to re-validate form
+    document.querySelectorAll('input[name="carat-auto-tabs"], input[name="carat-manual-tabs"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const form = radio.closest('div[role="tabpanel"]');
+            const button = form.querySelector('button[id^="calculate-"]');
+            validateForm(form, button, false);
+        });
     });
-    
+
     historySearchInput.addEventListener('input', () => loadHistory(historySearchInput.value));
+    
+    // Add listeners for converter
     converterValueInput.addEventListener('input', handleConversion);
-    fromUnitSelect.addEventListener('input', handleConversion);
-    toUnitSelect.addEventListener('input', handleConversion);
+    document.querySelectorAll('input[name="from-unit-tabs"], input[name="to-unit-tabs"]').forEach(radio => {
+        radio.addEventListener('change', handleConversion);
+    });
     
     modalCancelBtn.addEventListener('click', hideConfirmationModal);
     modal.addEventListener('click', (e) => { if(e.target === modal) hideConfirmationModal()});
@@ -111,16 +113,15 @@ function setupEventListeners() {
 function switchCalculatorMode(mode) {
     const modes = ['auto', 'manual', 'converter'];
     modes.forEach(m => {
-        document.getElementById(`${m}-mode-btn`).classList.toggle('active-tab', m === mode);
-        document.getElementById(`${m}-mode-btn`).setAttribute('aria-selected', m === mode);
         const panel = document.getElementById(`${m}-price-calculator`) || document.getElementById('unit-converter');
-        panel.classList.toggle('hidden', m !== mode);
+        if (panel) panel.classList.toggle('hidden', m !== mode);
     });
     resultDiv.classList.toggle('hidden', mode === 'converter');
     if (mode === 'auto') { updateFormVisibility('auto'); validateForm(autoCalcForm, autoCalcButton, false); }
     if (mode === 'manual') { updateFormVisibility('manual'); validateForm(manualCalcForm, manualCalcButton, false); }
     if (mode === 'converter') handleConversion();
 }
+
 function updateFormVisibility(mode) {
     const goldType = document.getElementById(`gold-type-${mode}`).value;
     document.getElementById(`commission-group-${mode}`).classList.toggle('hidden', goldType !== 'نو/زینتی');
@@ -164,15 +165,45 @@ function validateForm(form, button, showRequiredError = false) {
 // --- CALCULATION LOGIC ---
 function getFormValues(mode) {
     const goldType = document.getElementById(`gold-type-${mode}`).value;
-    const carat = (goldType === 'آب‌شده') ? parseFloat(cleanNumber(document.getElementById(`carat-${mode}`).value)) || 0 : parseFloat(document.getElementById(`carat-select-${mode}`).value) || 0;
-    return { goldType: goldType, weight: parseFloat(cleanNumber(document.getElementById(`weight-${mode}`).value)) || 0, carat: carat, commission: parseFloat(cleanNumber(document.getElementById(`commission-${mode}`).value)) || 0, profit: parseFloat(cleanNumber(document.getElementById(`profit-${mode}`).value)) || 0, tax: parseFloat(cleanNumber(document.getElementById(`tax-${mode}`).value)) || 0, };
+    let carat = 0;
+    if (goldType === 'آب‌شده') {
+        carat = parseFloat(cleanNumber(document.getElementById(`carat-${mode}`).value)) || 0;
+    } else {
+        const checkedRadio = document.querySelector(`input[name="carat-${mode}-tabs"]:checked`);
+        carat = checkedRadio ? parseFloat(checkedRadio.value) : 0;
+    }
+    return { 
+        goldType: goldType, 
+        weight: parseFloat(cleanNumber(document.getElementById(`weight-${mode}`).value)) || 0, 
+        carat: carat, 
+        commission: parseFloat(cleanNumber(document.getElementById(`commission-${mode}`).value)) || 0, 
+        profit: parseFloat(cleanNumber(document.getElementById(`profit-${mode}`).value)) || 0, 
+        tax: parseFloat(cleanNumber(document.getElementById(`tax-${mode}`).value)) || 0, 
+    };
 }
+
 function calculate(values, price18, isAuto) {
-    if (!price18) { resultDiv.innerHTML = '<p class="error">قیمت لحظه‌ای در دسترس نیست.</p>'; return; }
+    // START: Corrected Logic
+    let basePriceSource = price18; // Default to the standard 18-karat price provided
+    let calcPriceDisplay = price18; // The price to display as the reference in the result
+
+    // If it's an automatic (live) calculation and the type is 'second-hand', use the specific price for it
+    if (isAuto && values.goldType === 'دست دوم' && goldPrices["طلای دست دوم"]?.price) {
+        basePriceSource = goldPrices["طلای دست دوم"].price;
+        // Also update the display price to reflect what's being used for calculation
+        calcPriceDisplay = basePriceSource;
+    }
+    // END: Corrected Logic
+
+    if (!basePriceSource) { resultDiv.innerHTML = '<p class="error">قیمت لحظه‌ای در دسترس نیست.</p>'; return; }
     if (!isValidInput(values.weight, values.carat)) { resultDiv.innerHTML = '<p class="error">لطفا وزن و عیار معتبر وارد کنید.</p>'; return; }
-    const pricePerGramOfCarat = (price18 / 750) * values.carat;
+    
+    // Use the correctly determined basePriceSource for calculation
+    const pricePerGramOfCarat = (basePriceSource / 750) * values.carat;
     const baseValue = values.weight * pricePerGramOfCarat;
+    
     let wageAmount = 0, profitAmount = 0, taxAmount = 0, finalValue = baseValue;
+    
     if (values.goldType === 'نو/زینتی') {
         wageAmount = baseValue * (values.commission / 100);
         const subtotal_after_wage = baseValue + wageAmount;
@@ -184,12 +215,18 @@ function calculate(values, price18, isAuto) {
         taxAmount = profitAmount * (values.tax / 100);
         finalValue = baseValue + profitAmount + taxAmount;
     }
-    const calcType = `با قیمت ${isAuto ? 'لحظه‌ای' : 'دستی'} (هر گرم ۱۸ عیار: ${formatterPrice(price18)} تومان)`;
-    const resultData = { ...values, baseValue, wageAmount, profitAmount, taxAmount, finalValue, calcType, basePriceUsed: price18 };
+
+    // Adjust the display text to be more accurate based on which price was used for the calculation
+    const calcType = (isAuto && values.goldType === 'دست دوم')
+        ? `با قیمت لحظه‌ای (هر گرم دست دوم: ${formatterPrice(calcPriceDisplay)} تومان)`
+        : `با قیمت ${isAuto ? 'لحظه‌ای' : 'دستی'} (هر گرم ۱۸ عیار: ${formatterPrice(calcPriceDisplay)} تومان)`;
+
+    const resultData = { ...values, baseValue, wageAmount, profitAmount, taxAmount, finalValue, calcType, basePriceUsed: calcPriceDisplay };
     resultDiv.innerHTML = createResultTable(resultData);
     setupShareButton(resultData);
     saveCalculation({ ...resultData, date: new Date().toISOString() });
 }
+
 function calculateAuto(showErrors = false) { if (validateForm(autoCalcForm, autoCalcButton, showErrors)) calculate(getFormValues('auto'), goldPrices["طلای 18 عیار"]?.price, true); }
 function calculateManual(showErrors = false) { if (validateForm(manualCalcForm, manualCalcButton, showErrors)) calculate(getFormValues('manual'), parseFloat(cleanNumber(document.getElementById('price-manual').value)), false); }
 function createResultTable(data) {
@@ -279,13 +316,35 @@ function renderHistoryItem(item) {
     return itemArticle;
 }
 function deleteHistoryItem(id) { let h = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; localStorage.setItem(HISTORY_KEY, JSON.stringify(h.filter(item => item.date !== id))); showToast('محاسبه حذف شد.'); loadHistory(historySearchInput.value); }
-function reuseCalculation(goldType, weight, carat, commission, profit, tax) { switchCalculatorMode('auto'); document.getElementById('gold-type-auto').value = goldType || 'نو/زینتی'; updateFormVisibility('auto'); document.getElementById('weight-auto').value = weight; if (goldType === 'آب‌شده') document.getElementById('carat-auto').value = carat; else document.getElementById('carat-select-auto').value = carat; document.getElementById('commission-auto').value = commission || ''; document.getElementById('profit-auto').value = profit || ''; document.getElementById('tax-auto').value = tax || ''; validateForm(autoCalcForm, autoCalcButton, false); document.getElementById('calculator-card').scrollIntoView({ behavior: 'smooth' }); }
+function reuseCalculation(goldType, weight, carat, commission, profit, tax) {
+    document.getElementById('radio-1').checked = true;
+    switchCalculatorMode('auto'); 
+    document.getElementById('gold-type-auto').value = goldType || 'نو/زینتی'; 
+    updateFormVisibility('auto'); 
+    document.getElementById('weight-auto').value = weight; 
+    if (goldType === 'آب‌شده') {
+        document.getElementById('carat-auto').value = carat; 
+    } else {
+        const caratRadio = document.getElementById(`carat-auto-${carat}`);
+        if(caratRadio) caratRadio.checked = true;
+    }
+    document.getElementById('commission-auto').value = commission || ''; 
+    document.getElementById('profit-auto').value = profit || ''; 
+    document.getElementById('tax-auto').value = tax || ''; 
+    validateForm(autoCalcForm, autoCalcButton, false); 
+    document.getElementById('calculator-card').scrollIntoView({ behavior: 'smooth' }); 
+}
 function calculateAndDisplayTotalProfitLoss() {
     const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
     const currentPrice18 = goldPrices["طلای 18 عیار"]?.price;
     if (!history.length) { totalProfitLossContainer.innerHTML = '<p>موردی برای محاسبه وجود ندارد.</p>'; return; }
     if (!currentPrice18) { totalProfitLossContainer.innerHTML = '<p>قیمت لحظه‌ای برای محاسبه در دسترس نیست.</p>'; return; }
-    const totalProfitLoss = history.reduce((acc, item) => acc + ((item.weight * (currentPrice18 / 750) * item.carat) - (item.finalValue || item.originalValue)), 0);
+    const totalProfitLoss = history.reduce((acc, item) => {
+        if (!item || typeof item.weight === 'undefined' || typeof item.carat === 'undefined' || typeof item.finalValue === 'undefined') {
+            return acc;
+        }
+        return acc + ((item.weight * (currentPrice18 / 750) * item.carat) - item.finalValue);
+    }, 0);
     let cssClass = 'neutral';
     if (totalProfitLoss > 0.01) { cssClass = 'profit'; }
     else if (totalProfitLoss < -0.01) { cssClass = 'loss'; }
@@ -372,21 +431,36 @@ function displayUpdateStatus(isCached = false) {
 }
 function startPriceStalenessChecker() { if (priceUpdateInterval) clearInterval(priceUpdateInterval); priceUpdateInterval = setInterval(checkPriceStaleness, 10000); }
 function checkPriceStaleness() { if (!lastUpdateTime) return; if ((new Date - lastUpdateTime) / 1e3 > 60) { const t = document.getElementById("time-text-container"); t && (t.innerHTML = '<span class="stale-prices">قیمت‌ها نیاز به به‌روزرسانی دارند.</span>'), clearInterval(priceUpdateInterval); } }
+
 // --- UNIT CONVERSION LOGIC ---
 function handleConversion() {
     const value = parseFloat(cleanNumber(converterValueInput.value)) || 0;
-    if (value <= 0) { converterResultDiv.innerHTML = `<p>نتیجه تبدیل در اینجا نمایش داده می‌شود.</p>`; return; }
-    const fromUnit = fromUnitSelect.value, toUnit = toUnitSelect.value;
-    const result = convertUnits(value, fromUnit, toUnit);
-    const unitLabels = { 'gram_705': 'گرم', 'gram_750': 'گرم', 'gram_999': 'گرم', 'mesghal_705': 'مثقال' };
-    converterResultDiv.innerHTML = `<p>${formatterPrice(value)} ${unitLabels[fromUnit]} = ${formatterPrice(result.toFixed(4))} ${unitLabels[toUnit]}</p>`;
+    if (value <= 0) {
+        converterResultDiv.innerHTML = `<p>نتیجه تبدیل در اینجا نمایش داده می‌شود.</p>`;
+        return;
+    }
+    
+    const fromUnitRadio = document.querySelector('input[name="from-unit-tabs"]:checked');
+    const toUnitRadio = document.querySelector('input[name="to-unit-tabs"]:checked');
+    
+    if (!fromUnitRadio || !toUnitRadio) return; // Exit if radios are not found
+
+    const fromUnitValue = fromUnitRadio.value;
+    const toUnitValue = toUnitRadio.value;
+    
+    const result = convertUnits(value, fromUnitValue, toUnitValue);
+    
+    const fromLabel = document.querySelector(`label[for="${fromUnitRadio.id}"]`).textContent;
+    const toLabel = document.querySelector(`label[for="${toUnitRadio.id}"]`).textContent;
+
+    converterResultDiv.innerHTML = `<p>${formatterPrice(value)} ${fromLabel} = <br><b>${formatterPrice(result.toFixed(4))} ${toLabel}</b></p>`;
 }
 function convertUnits(value, from, to) {
     const purities = { '705': 0.705, '750': 0.750, '999': 0.999 };
     const [fromType, fromKarat] = from.split('_');
-    const pureGoldGrams = fromType === 'gram' ? value * purities[fromKarat] : (value * MESGHAL_TO_GRAM) * purities['705'];
+    const pureGoldGrams = fromType === 'gram' ? value * purities[fromKarat] : (value * MESGHAL_TO_GRAM) * purities[fromKarat];
     const [toType, toKarat] = to.split('_');
-    return toType === 'gram' ? pureGoldGrams / purities[toKarat] : (pureGoldGrams / purities['705']) / MESGHAL_TO_GRAM;
+    return toType === 'gram' ? pureGoldGrams / purities[toKarat] : (pureGoldGrams / purities[toKarat]) / MESGHAL_TO_GRAM;
 }
 // --- UTILITY FUNCTIONS ---
 function formatNumberInput(input) { let v = cleanNumber(input.value); if (v) input.value = new Intl.NumberFormat('en-US').format(v); }
