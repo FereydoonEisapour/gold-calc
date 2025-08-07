@@ -53,7 +53,7 @@
 
             <div id="auto-price-calculator" role="tabpanel" aria-labelledby="auto-mode-btn">
                 <div class="form-group">
-                    <label>نوع طلا</label>
+                    <label class="form-label-header">نوع طلا</label>
                     <div class="tabs tabs-small tabs-gold-type">
                         <input type="radio" id="gold-type-auto-new" name="gold-type-auto-tabs" value="نو/زینتی" checked />
                         <label class="tab tab-small" for="gold-type-auto-new">نو / زینتی</label>
@@ -64,13 +64,8 @@
                         <span class="glider glider-gold-type"></span>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="weight-auto">وزن (گرم)</label>
-                    <input type="text" id="weight-auto" class="calc-input" inputmode="decimal" placeholder="مثال: 12.54">
-                    <div id="weight-auto-error" class="error-message"></div>
-                </div>
                 <div class="form-group" id="carat-select-group-auto">
-                    <label>عیار طلا</label>
+                    <label class="form-label-header">عیار طلا</label>
                     <div class="tabs tabs-small">
                         <input type="radio" id="carat-auto-750" name="carat-auto-tabs" value="750" checked />
                         <label class="tab tab-small" for="carat-auto-750">۱۸ عیار (۷۵۰)</label>
@@ -79,30 +74,63 @@
                         <span class="glider glider-small"></span>
                     </div>
                 </div>
-                <div class="form-group hidden" id="carat-input-group-auto">
-                    <label for="carat-auto">عیار دقیق
-                        <span class="tooltip-trigger">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                            <span class="tooltip-text">برای طلای آب‌شده، عیار دقیق ذوب شده را وارد کنید (مثلاً ۹۳۵).</span>
-                        </span>
-                    </label>
-                    <input type="text" id="carat-auto" class="calc-input" inputmode="decimal" placeholder="مثال: 935">
-                    <div id="carat-auto-error" class="error-message"></div>
-                </div>
-                <div class="form-group" id="commission-group-auto">
-                    <label for="commission-auto">اجرت ساخت (درصد)</label>
-                    <input type="text" id="commission-auto" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 15">
-                    <div id="commission-auto-error" class="error-message"></div>
-                </div>
-                <div class="form-group" id="profit-group-auto">
-                    <label for="profit-auto">سود فروشنده (درصد)</label>
-                    <input type="text" id="profit-auto" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 7">
-                    <div id="profit-auto-error" class="error-message"></div>
-                </div>
-                 <div class="form-group" id="tax-group-auto">
-                    <label for="tax-auto">مالیات (درصد)</label>
-                    <input type="text" id="tax-auto" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 9">
-                    <div id="tax-auto-error" class="error-message"></div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="weight-auto" class="inp">
+                            <input type="text" id="weight-auto" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">وزن (گرم)</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                        <div class="input-meta">
+                            <div id="weight-auto-error" class="error-message"></div>
+                            <small class="helper-text">مثال: 12.54</small>
+                        </div>
+                    </div>
+                    <div class="form-group hidden" id="carat-input-group-auto">
+                        <label for="carat-auto" class="inp">
+                            <input type="text" id="carat-auto" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">عیار دقیق</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                        <div class="input-meta">
+                            <div id="carat-auto-error" class="error-message"></div>
+                            <small class="helper-text">مثال: 935</small>
+                        </div>
+                    </div>
+                    <div class="form-group" id="commission-group-auto">
+                        <label for="commission-auto" class="inp">
+                            <input type="text" id="commission-auto" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">اجرت (درصد)</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                        <div class="input-meta">
+                            <div id="commission-auto-error" class="error-message"></div>
+                            <small class="helper-text">اختیاری - مثال: 15</small>
+                        </div>
+                    </div>
+                    <div class="form-group" id="profit-group-auto">
+                        <label for="profit-auto" class="inp">
+                            <input type="text" id="profit-auto" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">سود (درصد)</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                         <div class="input-meta">
+                            <div id="profit-auto-error" class="error-message"></div>
+                            <small class="helper-text">اختیاری - مثال: 7</small>
+                        </div>
+                    </div>
+                     <div class="form-group" id="tax-group-auto">
+                        <label for="tax-auto" class="inp">
+                            <input type="text" id="tax-auto" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">مالیات (درصد)</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                         <div class="input-meta">
+                            <div id="tax-auto-error" class="error-message"></div>
+                            <small class="helper-text">اختیاری - مثال: 9</small>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <button id="calculate-auto-btn" disabled>محاسبه با قیمت لحظه‌ای</button>
@@ -110,8 +138,8 @@
             </div>
 
             <div id="manual-price-calculator" class="hidden" role="tabpanel" aria-labelledby="manual-mode-btn">
-                 <div class="form-group">
-                    <label>نوع طلا</label>
+                <div class="form-group">
+                    <label class="form-label-header">نوع طلا</label>
                     <div class="tabs tabs-small tabs-gold-type">
                         <input type="radio" id="gold-type-manual-new" name="gold-type-manual-tabs" value="نو/زینتی" checked />
                         <label class="tab tab-small" for="gold-type-manual-new">نو / زینتی</label>
@@ -122,14 +150,9 @@
                         <span class="glider glider-gold-type"></span>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="weight-manual">وزن (گرم)</label>
-                    <input type="text" id="weight-manual" class="calc-input" inputmode="decimal" placeholder="مثال: 12.54">
-                    <div id="weight-manual-error" class="error-message"></div>
-                </div>
-                <div class="form-group" id="carat-select-group-manual">
-                    <label>عیار طلا</label>
-                     <div class="tabs tabs-small">
+                 <div class="form-group" id="carat-select-group-manual">
+                    <label class="form-label-header">عیار طلا</label>
+                    <div class="tabs tabs-small">
                         <input type="radio" id="carat-manual-750" name="carat-manual-tabs" value="750" checked />
                         <label class="tab tab-small" for="carat-manual-750">۱۸ عیار (۷۵۰)</label>
                         <input type="radio" id="carat-manual-999" name="carat-manual-tabs" value="999" />
@@ -137,30 +160,73 @@
                         <span class="glider glider-small"></span>
                     </div>
                 </div>
-                <div class="form-group hidden" id="carat-input-group-manual">
-                    <label for="carat-manual">عیار دقیق (برای آب‌شده)</label>
-                    <input type="text" id="carat-manual" class="calc-input" inputmode="decimal" placeholder="مثال: 935">
-                    <div id="carat-manual-error" class="error-message"></div>
-                </div>
-                <div class="form-group" id="commission-group-manual">
-                    <label for="commission-manual">اجرت ساخت (درصد)</label>
-                    <input type="text" id="commission-manual" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 15">
-                    <div id="commission-manual-error" class="error-message"></div>
-                </div>
-                 <div class="form-group" id="profit-group-manual">
-                    <label for="profit-manual">سود فروشنده (درصد)</label>
-                    <input type="text" id="profit-manual" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 7">
-                    <div id="profit-manual-error" class="error-message"></div>
-                </div>
-                 <div class="form-group" id="tax-group-manual">
-                    <label for="tax-manual">مالیات (درصد)</label>
-                    <input type="text" id="tax-manual" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 9">
-                    <div id="tax-manual-error" class="error-message"></div>
-                </div>
-                <div class="form-group">
-                    <label for="price-manual">قیمت هر گرم طلای ۱۸ عیار (تومان)</label>
-                    <input type="text" id="price-manual" class="calc-input" inputmode="decimal" placeholder="مثال: 3,450,000">
-                    <div id="price-manual-error" class="error-message"></div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="weight-manual" class="inp">
+                            <input type="text" id="weight-manual" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">وزن (گرم)</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                        <div class="input-meta">
+                            <div id="weight-manual-error" class="error-message"></div>
+                            <small class="helper-text">مثال: 12.54</small>
+                        </div>
+                    </div>
+                    <div class="form-group hidden" id="carat-input-group-manual">
+                        <label for="carat-manual" class="inp">
+                            <input type="text" id="carat-manual" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">عیار دقیق</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                        <div class="input-meta">
+                            <div id="carat-manual-error" class="error-message"></div>
+                            <small class="helper-text">مثال: 935</small>
+                        </div>
+                    </div>
+                    <div class="form-group" id="commission-group-manual">
+                        <label for="commission-manual" class="inp">
+                            <input type="text" id="commission-manual" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">اجرت (درصد)</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                         <div class="input-meta">
+                            <div id="commission-manual-error" class="error-message"></div>
+                            <small class="helper-text">اختیاری - مثال: 15</small>
+                        </div>
+                    </div>
+                    <div class="form-group" id="profit-group-manual">
+                        <label for="profit-manual" class="inp">
+                            <input type="text" id="profit-manual" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">سود (درصد)</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                        <div class="input-meta">
+                            <div id="profit-manual-error" class="error-message"></div>
+                            <small class="helper-text">اختیاری - مثال: 7</small>
+                        </div>
+                    </div>
+                    <div class="form-group" id="tax-group-manual">
+                        <label for="tax-manual" class="inp">
+                            <input type="text" id="tax-manual" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">مالیات (درصد)</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                        <div class="input-meta">
+                            <div id="tax-manual-error" class="error-message"></div>
+                            <small class="helper-text">اختیاری - مثال: 9</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="price-manual" class="inp">
+                            <input type="text" id="price-manual" class="calc-input" inputmode="decimal" placeholder="&nbsp;">
+                            <span class="label">قیمت هر گرم ۱۸ عیار</span>
+                            <span class="focus-bg"></span>
+                        </label>
+                        <div class="input-meta">
+                            <div id="price-manual-error" class="error-message"></div>
+                            <small class="helper-text">مثال: 3,450,000</small>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <button id="calculate-manual-btn" disabled>محاسبه با قیمت دستی</button>
@@ -169,11 +235,18 @@
             
             <div id="unit-converter" class="hidden" role="tabpanel" aria-labelledby="converter-mode-btn">
                 <div class="form-group">
-                    <label for="converter-value">مقدار</label>
-                    <input type="text" id="converter-value" class="calc-input" inputmode="decimal" value="1" placeholder="1">
+                    <label for="converter-value" class="inp">
+                        <input type="text" id="converter-value" class="calc-input" inputmode="decimal" placeholder="&nbsp;" value="1">
+                        <span class="label">مقدار</span>
+                        <span class="focus-bg"></span>
+                    </label>
+                    <div class="input-meta">
+                        <div></div>
+                        <small class="helper-text">مثال: 1</small>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>از واحد</label>
+                    <label class="form-label-header">از واحد</label>
                     <div class="tabs tabs-converter">
                         <input type="radio" id="from-unit-1" name="from-unit-tabs" value="mesghal_705" checked />
                         <label class="tab tab-converter" for="from-unit-1">مثقال ۱۷ عیار (۷۰۵)</label>
@@ -187,7 +260,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>به واحد</label>
+                    <label class="form-label-header">به واحد</label>
                     <div class="tabs tabs-converter">
                         <input type="radio" id="to-unit-1" name="to-unit-tabs" value="gram_750" checked />
                         <label class="tab tab-converter" for="to-unit-1">گرم ۱۸ عیار (۷۵۰)</label>
@@ -239,7 +312,11 @@
                 محاسبات قبلی
             </h2>
             <div class="form-group">
-                <input type="search" id="history-search-input" class="form-control" placeholder="جستجو در تاریخچه...">
+                 <label for="history-search-input" class="inp">
+                    <input type="search" id="history-search-input" placeholder="&nbsp;">
+                    <span class="label">جستجو در تاریخچه...</span>
+                    <span class="focus-bg"></span>
+                </label>
             </div>
             <div id="history-container">
                 <!-- History items will be injected here by JavaScript -->
