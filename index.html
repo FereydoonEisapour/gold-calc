@@ -38,11 +38,18 @@
     <main id="app-wrapper">
         <section class="card" id="calculator-card" aria-labelledby="calculator-heading">
             <h2 id="calculator-heading" class="visually-hidden">ابزارهای طلا</h2>
-            <nav class="calculator-tabs" role="tablist" aria-label="ابزارهای محاسبه طلا">
-                <button id="auto-mode-btn" class="tab-button active-tab" role="tab" aria-selected="true" aria-controls="auto-price-calculator">محاسبه فوری</button>
-                <button id="manual-mode-btn" class="tab-button" role="tab" aria-selected="false" aria-controls="manual-price-calculator">محاسبه سفارشی</button>
-                <button id="converter-mode-btn" class="tab-button" role="tab" aria-selected="false" aria-controls="unit-converter">مبدل واحد‌ها</button>
-            </nav>
+            
+            <div class="tabs-container">
+                <div class="tabs">
+                    <input type="radio" id="radio-1" name="tabs" checked />
+                    <label class="tab" for="radio-1">محاسبه فوری</label>
+                    <input type="radio" id="radio-2" name="tabs" />
+                    <label class="tab" for="radio-2">محاسبه سفارشی</label>
+                    <input type="radio" id="radio-3" name="tabs" />
+                    <label class="tab" for="radio-3">مبدل واحد‌ها</label>
+                    <span class="glider"></span>
+                </div>
+            </div>
 
             <div id="auto-price-calculator" role="tabpanel" aria-labelledby="auto-mode-btn">
                 <div class="form-group">
@@ -59,11 +66,14 @@
                     <div id="weight-auto-error" class="error-message"></div>
                 </div>
                 <div class="form-group" id="carat-select-group-auto">
-                    <label for="carat-select-auto">عیار طلا</label>
-                    <select id="carat-select-auto" class="form-control">
-                        <option value="750" selected>۱۸ عیار (۷۵۰)</option>
-                        <option value="999">۲۴ عیار (۹۹۹)</option>
-                    </select>
+                    <label>عیار طلا</label>
+                    <div class="tabs tabs-small">
+                        <input type="radio" id="carat-auto-750" name="carat-auto-tabs" value="750" checked />
+                        <label class="tab tab-small" for="carat-auto-750">۱۸ عیار (۷۵۰)</label>
+                        <input type="radio" id="carat-auto-999" name="carat-auto-tabs" value="999" />
+                        <label class="tab tab-small" for="carat-auto-999">۲۴ عیار (۹۹۹)</label>
+                        <span class="glider glider-small"></span>
+                    </div>
                 </div>
                 <div class="form-group hidden" id="carat-input-group-auto">
                     <label for="carat-auto">عیار دقیق
@@ -76,32 +86,17 @@
                     <div id="carat-auto-error" class="error-message"></div>
                 </div>
                 <div class="form-group" id="commission-group-auto">
-                    <label for="commission-auto">اجرت ساخت (درصد)
-                         <span class="tooltip-trigger">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                            <span class="tooltip-text">هزینه ساخت طلا که به صورت درصدی از ارزش خام طلا محاسبه می‌شود.</span>
-                        </span>
-                    </label>
+                    <label for="commission-auto">اجرت ساخت (درصد)</label>
                     <input type="text" id="commission-auto" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 15">
                     <div id="commission-auto-error" class="error-message"></div>
                 </div>
                 <div class="form-group" id="profit-group-auto">
-                    <label for="profit-auto">سود فروشنده (درصد)
-                         <span class="tooltip-trigger">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                            <span class="tooltip-text">سود قانونی طلافروش که معمولاً ۷٪ است.</span>
-                        </span>
-                    </label>
+                    <label for="profit-auto">سود فروشنده (درصد)</label>
                     <input type="text" id="profit-auto" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 7">
                     <div id="profit-auto-error" class="error-message"></div>
                 </div>
                  <div class="form-group" id="tax-group-auto">
-                    <label for="tax-auto">مالیات (درصد)
-                         <span class="tooltip-trigger">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                            <span class="tooltip-text">مالیات بر ارزش افزوده که بر روی اجرت و سود اعمال می‌شود.</span>
-                        </span>
-                    </label>
+                    <label for="tax-auto">مالیات (درصد)</label>
                     <input type="text" id="tax-auto" class="calc-input" inputmode="decimal" placeholder="اختیاری - مثال: 9">
                     <div id="tax-auto-error" class="error-message"></div>
                 </div>
@@ -125,11 +120,14 @@
                     <div id="weight-manual-error" class="error-message"></div>
                 </div>
                 <div class="form-group" id="carat-select-group-manual">
-                    <label for="carat-select-manual">عیار طلا</label>
-                    <select id="carat-select-manual" class="form-control">
-                        <option value="750" selected>۱۸ عیار (۷۵۰)</option>
-                        <option value="999">۲۴ عیار (۹۹۹)</option>
-                    </select>
+                    <label>عیار طلا</label>
+                     <div class="tabs tabs-small">
+                        <input type="radio" id="carat-manual-750" name="carat-manual-tabs" value="750" checked />
+                        <label class="tab tab-small" for="carat-manual-750">۱۸ عیار (۷۵۰)</label>
+                        <input type="radio" id="carat-manual-999" name="carat-manual-tabs" value="999" />
+                        <label class="tab tab-small" for="carat-manual-999">۲۴ عیار (۹۹۹)</label>
+                        <span class="glider glider-small"></span>
+                    </div>
                 </div>
                 <div class="form-group hidden" id="carat-input-group-manual">
                     <label for="carat-manual">عیار دقیق (برای آب‌شده)</label>
@@ -167,22 +165,32 @@
                     <input type="text" id="converter-value" class="calc-input" inputmode="decimal" value="1" placeholder="1">
                 </div>
                 <div class="form-group">
-                    <label for="from-unit">از واحد</label>
-                    <select id="from-unit" class="form-control">
-                        <option value="mesghal_705" selected>مثقال ۱۷ عیار (۷۰۵)</option>
-                        <option value="gram_750">گرم ۱۸ عیار (۷۵۰)</option>
-                        <option value="gram_705">گرم ۱۷ عیار (۷۰۵)</option>
-                        <option value="gram_999">گرم ۲۴ عیار (۹۹۹)</option>
-                    </select>
+                    <label>از واحد</label>
+                    <div class="tabs tabs-converter">
+                        <input type="radio" id="from-unit-1" name="from-unit-tabs" value="mesghal_705" checked />
+                        <label class="tab tab-converter" for="from-unit-1">مثقال ۱۷ عیار (۷۰۵)</label>
+                        <input type="radio" id="from-unit-2" name="from-unit-tabs" value="gram_750" />
+                        <label class="tab tab-converter" for="from-unit-2">گرم ۱۸ عیار (۷۵۰)</label>
+                        <input type="radio" id="from-unit-3" name="from-unit-tabs" value="gram_705" />
+                        <label class="tab tab-converter" for="from-unit-3">گرم ۱۷ عیار (۷۰۵)</label>
+                        <input type="radio" id="from-unit-4" name="from-unit-tabs" value="gram_999" />
+                        <label class="tab tab-converter" for="from-unit-4">گرم ۲۴ عیار (۹۹۹)</label>
+                        <span class="glider glider-converter"></span>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="to-unit">به واحد</label>
-                    <select id="to-unit" class="form-control">
-                        <option value="gram_750" selected>گرم ۱۸ عیار (۷۵۰)</option>
-                        <option value="mesghal_705">مثقال ۱۷ عیار (۷۰۵)</option>
-                        <option value="gram_705">گرم ۱۷ عیار (۷۰۵)</option>
-                        <option value="gram_999">گرم ۲۴ عیار (۹۹۹)</option>
-                    </select>
+                    <label>به واحد</label>
+                    <div class="tabs tabs-converter">
+                        <input type="radio" id="to-unit-1" name="to-unit-tabs" value="gram_750" checked />
+                        <label class="tab tab-converter" for="to-unit-1">گرم ۱۸ عیار (۷۵۰)</label>
+                        <input type="radio" id="to-unit-2" name="to-unit-tabs" value="mesghal_705" />
+                        <label class="tab tab-converter" for="to-unit-2">مثقال ۱۷ عیار (۷۰۵)</label>
+                        <input type="radio" id="to-unit-3" name="to-unit-tabs" value="gram_705" />
+                        <label class="tab tab-converter" for="to-unit-3">گرم ۱۷ عیار (۷۰۵)</label>
+                        <input type="radio" id="to-unit-4" name="to-unit-tabs" value="gram_999" />
+                        <label class="tab tab-converter" for="to-unit-4">گرم ۲۴ عیار (۹۹۹)</label>
+                        <span class="glider glider-converter"></span>
+                    </div>
                 </div>
                 <div class="result" id="converter-result">
                     <p>نتیجه تبدیل در اینجا نمایش داده می‌شود.</p>
