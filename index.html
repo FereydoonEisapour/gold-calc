@@ -53,12 +53,16 @@
 
             <div id="auto-price-calculator" role="tabpanel" aria-labelledby="auto-mode-btn">
                 <div class="form-group">
-                    <label for="gold-type-auto">نوع طلا</label>
-                    <select id="gold-type-auto" class="form-control">
-                        <option value="نو/زینتی" selected>نو / زینتی</option>
-                        <option value="دست دوم">دست دوم</option>
-                        <option value="آب‌شده">آب‌شده</option>
-                    </select>
+                    <label>نوع طلا</label>
+                    <div class="tabs tabs-small tabs-gold-type">
+                        <input type="radio" id="gold-type-auto-new" name="gold-type-auto-tabs" value="نو/زینتی" checked />
+                        <label class="tab tab-small" for="gold-type-auto-new">نو / زینتی</label>
+                        <input type="radio" id="gold-type-auto-used" name="gold-type-auto-tabs" value="دست دوم" />
+                        <label class="tab tab-small" for="gold-type-auto-used">دست دوم</label>
+                        <input type="radio" id="gold-type-auto-melted" name="gold-type-auto-tabs" value="آب‌شده" />
+                        <label class="tab tab-small" for="gold-type-auto-melted">آب‌شده</label>
+                        <span class="glider glider-gold-type"></span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="weight-auto">وزن (گرم)</label>
@@ -107,12 +111,16 @@
 
             <div id="manual-price-calculator" class="hidden" role="tabpanel" aria-labelledby="manual-mode-btn">
                  <div class="form-group">
-                    <label for="gold-type-manual">نوع طلا</label>
-                    <select id="gold-type-manual" class="form-control">
-                        <option value="نو/زینتی" selected>نو / زینتی</option>
-                        <option value="دست دوم">دست دوم</option>
-                        <option value="آب‌شده">آب‌شده</option>
-                    </select>
+                    <label>نوع طلا</label>
+                    <div class="tabs tabs-small tabs-gold-type">
+                        <input type="radio" id="gold-type-manual-new" name="gold-type-manual-tabs" value="نو/زینتی" checked />
+                        <label class="tab tab-small" for="gold-type-manual-new">نو / زینتی</label>
+                        <input type="radio" id="gold-type-manual-used" name="gold-type-manual-tabs" value="دست دوم" />
+                        <label class="tab tab-small" for="gold-type-manual-used">دست دوم</label>
+                        <input type="radio" id="gold-type-manual-melted" name="gold-type-manual-tabs" value="آب‌شده" />
+                        <label class="tab tab-small" for="gold-type-manual-melted">آب‌شده</label>
+                        <span class="glider glider-gold-type"></span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="weight-manual">وزن (گرم)</label>
