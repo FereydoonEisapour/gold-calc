@@ -64,10 +64,15 @@ function setupEventListeners() {
     autoCalcButton.addEventListener('click', () => calculateAuto(true));
     manualCalcButton.addEventListener('click', () => calculateManual(true));
 
-    document.getElementById('gold-type-auto').addEventListener('change', () => updateFormVisibility('auto'));
-    document.getElementById('gold-type-manual').addEventListener('change', () => updateFormVisibility('manual'));
+    // Listeners for the new Gold Type tabs
+    document.querySelectorAll('input[name="gold-type-auto-tabs"]').forEach(radio => {
+        radio.addEventListener('change', () => updateFormVisibility('auto'));
+    });
+    document.querySelectorAll('input[name="gold-type-manual-tabs"]').forEach(radio => {
+        radio.addEventListener('change', () => updateFormVisibility('manual'));
+    });
     
-    document.querySelectorAll('.calc-input, .form-control').forEach(input => {
+    document.querySelectorAll('.calc-input').forEach(input => {
         input.addEventListener('input', (event) => {
             const form = event.target.closest('div[role="tabpanel"]');
             if (!form || form.id.includes('converter')) return;
@@ -123,7 +128,7 @@ function switchCalculatorMode(mode) {
 }
 
 function updateFormVisibility(mode) {
-    const goldType = document.getElementById(`gold-type-${mode}`).value;
+    const goldType = document.querySelector(`input[name="gold-type-${mode}-tabs"]:checked`).value;
     document.getElementById(`commission-group-${mode}`).classList.toggle('hidden', goldType !== 'نو/زینتی');
     document.getElementById(`profit-group-${mode}`).classList.toggle('hidden', goldType === 'آب‌شده');
     document.getElementById(`tax-group-${mode}`).classList.toggle('hidden', goldType === 'آب‌شده');
@@ -164,7 +169,7 @@ function validateForm(form, button, showRequiredError = false) {
 
 // --- CALCULATION LOGIC ---
 function getFormValues(mode) {
-    const goldType = document.getElementById(`gold-type-${mode}`).value;
+    const goldType = document.querySelector(`input[name="gold-type-${mode}-tabs"]:checked`).value;
     let carat = 0;
     if (goldType === 'آب‌شده') {
         carat = parseFloat(cleanNumber(document.getElementById(`carat-${mode}`).value)) || 0;
@@ -183,22 +188,17 @@ function getFormValues(mode) {
 }
 
 function calculate(values, price18, isAuto) {
-    // START: Corrected Logic
-    let basePriceSource = price18; // Default to the standard 18-karat price provided
-    let calcPriceDisplay = price18; // The price to display as the reference in the result
+    let basePriceSource = price18;
+    let calcPriceDisplay = price18;
 
-    // If it's an automatic (live) calculation and the type is 'second-hand', use the specific price for it
     if (isAuto && values.goldType === 'دست دوم' && goldPrices["طلای دست دوم"]?.price) {
         basePriceSource = goldPrices["طلای دست دوم"].price;
-        // Also update the display price to reflect what's being used for calculation
         calcPriceDisplay = basePriceSource;
     }
-    // END: Corrected Logic
 
     if (!basePriceSource) { resultDiv.innerHTML = '<p class="error">قیمت لحظه‌ای در دسترس نیست.</p>'; return; }
     if (!isValidInput(values.weight, values.carat)) { resultDiv.innerHTML = '<p class="error">لطفا وزن و عیار معتبر وارد کنید.</p>'; return; }
     
-    // Use the correctly determined basePriceSource for calculation
     const pricePerGramOfCarat = (basePriceSource / 750) * values.carat;
     const baseValue = values.weight * pricePerGramOfCarat;
     
@@ -216,7 +216,6 @@ function calculate(values, price18, isAuto) {
         finalValue = baseValue + profitAmount + taxAmount;
     }
 
-    // Adjust the display text to be more accurate based on which price was used for the calculation
     const calcType = (isAuto && values.goldType === 'دست دوم')
         ? `با قیمت لحظه‌ای (هر گرم دست دوم: ${formatterPrice(calcPriceDisplay)} تومان)`
         : `با قیمت ${isAuto ? 'لحظه‌ای' : 'دستی'} (هر گرم ۱۸ عیار: ${formatterPrice(calcPriceDisplay)} تومان)`;
@@ -319,8 +318,16 @@ function deleteHistoryItem(id) { let h = JSON.parse(localStorage.getItem(HISTORY
 function reuseCalculation(goldType, weight, carat, commission, profit, tax) {
     document.getElementById('radio-1').checked = true;
     switchCalculatorMode('auto'); 
-    document.getElementById('gold-type-auto').value = goldType || 'نو/زینتی'; 
+    
+    // Select the correct radio button for gold type
+    const typeToSelect = goldType || 'نو/زینتی';
+    const radioToSelect = document.querySelector(`input[name="gold-type-auto-tabs"][value="${typeToSelect}"]`);
+    if (radioToSelect) {
+        radioToSelect.checked = true;
+    }
+
     updateFormVisibility('auto'); 
+
     document.getElementById('weight-auto').value = weight; 
     if (goldType === 'آب‌شده') {
         document.getElementById('carat-auto').value = carat; 
