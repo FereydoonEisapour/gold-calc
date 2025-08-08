@@ -3,9 +3,14 @@ const HISTORY_KEY = 'goldCalcHistory';
 const CACHED_PRICES_KEY = 'goldCalcCachedPrices';
 const MAX_HISTORY_ITEMS = 7;
 const MESGHAL_TO_GRAM = 4.6083;
+const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes in milliseconds
+const RETRY_INTERVAL = 30 * 1000; // 30 seconds for retry
 
 let lastUpdateTime = null;
 let priceUpdateInterval = null;
+let countdownInterval = null;
+let retryTimeout = null;
+
 const goldPrices = {
     "طلای 18 عیار / 740": null,
     "طلای 18 عیار": null, // This is 750
@@ -23,6 +28,8 @@ const autoCalcButton = document.getElementById('calculate-auto-btn');
 const manualCalcButton = document.getElementById('calculate-manual-btn');
 const historyContainer = document.getElementById('history-container');
 const historySearchInput = document.getElementById('history-search-input');
+const historyFilterSelect = document.getElementById('history-filter');
+const historySortSelect = document.getElementById('history-sort');
 const priceTable = document.getElementById('goldTable');
 const resultDiv = document.getElementById('result');
 const themeToggleButton = document.getElementById('theme-toggle-btn');
@@ -45,8 +52,7 @@ window.onload = function () {
     applyInitialTheme();
     setupEventListeners();
     setupParticleAnimation();
-    priceTable.innerHTML = '<tr><td colspan="2">در حال بارگذاری قیمت‌ها...</td></tr>';
-    loadHistory();
+    displaySkeletonLoader(); // <<<--- 1. FIRST CHANGE: Show skeleton on initial load
     fetchPricesFromTgju();
     switchCalculatorMode('auto');
     validateForm(autoCalcForm, autoCalcButton, false);
@@ -55,8 +61,7 @@ window.onload = function () {
 
 function setupEventListeners() {
     themeToggleButton.addEventListener('click', toggleTheme);
-    
-    // Main tabs
+
     document.getElementById('radio-1').addEventListener('change', () => switchCalculatorMode('auto'));
     document.getElementById('radio-2').addEventListener('change', () => switchCalculatorMode('manual'));
     document.getElementById('radio-3').addEventListener('change', () => switchCalculatorMode('converter'));
@@ -64,14 +69,10 @@ function setupEventListeners() {
     autoCalcButton.addEventListener('click', () => calculateAuto(true));
     manualCalcButton.addEventListener('click', () => calculateManual(true));
 
-    // Listeners for the new Gold Type tabs
-    document.querySelectorAll('input[name="gold-type-auto-tabs"]').forEach(radio => {
-        radio.addEventListener('change', () => updateFormVisibility('auto'));
+    document.querySelectorAll('input[name="gold-type-auto-tabs"], input[name="gold-type-manual-tabs"]').forEach(radio => {
+        radio.addEventListener('change', () => updateFormVisibility(radio.closest('div[role="tabpanel"]').id.includes('auto') ? 'auto' : 'manual'));
     });
-    document.querySelectorAll('input[name="gold-type-manual-tabs"]').forEach(radio => {
-        radio.addEventListener('change', () => updateFormVisibility('manual'));
-    });
-    
+
     document.querySelectorAll('.calc-input').forEach(input => {
         input.addEventListener('input', (event) => {
             const form = event.target.closest('div[role="tabpanel"]');
@@ -93,7 +94,6 @@ function setupEventListeners() {
         }
     });
 
-    // Add listeners for new carat tabs to re-validate form
     document.querySelectorAll('input[name="carat-auto-tabs"], input[name="carat-manual-tabs"]').forEach(radio => {
         radio.addEventListener('change', () => {
             const form = radio.closest('div[role="tabpanel"]');
@@ -102,16 +102,17 @@ function setupEventListeners() {
         });
     });
 
-    historySearchInput.addEventListener('input', () => loadHistory(historySearchInput.value));
-    
-    // Add listeners for converter
+    historySearchInput.addEventListener('input', () => loadHistory());
+    historyFilterSelect.addEventListener('change', () => loadHistory());
+    historySortSelect.addEventListener('change', () => loadHistory());
+
     converterValueInput.addEventListener('input', handleConversion);
     document.querySelectorAll('input[name="from-unit-tabs"], input[name="to-unit-tabs"]').forEach(radio => {
         radio.addEventListener('change', handleConversion);
     });
-    
+
     modalCancelBtn.addEventListener('click', hideConfirmationModal);
-    modal.addEventListener('click', (e) => { if(e.target === modal) hideConfirmationModal()});
+    modal.addEventListener('click', (e) => { if (e.target === modal) hideConfirmationModal() });
 }
 
 // --- UI & FORM LOGIC ---
@@ -177,13 +178,13 @@ function getFormValues(mode) {
         const checkedRadio = document.querySelector(`input[name="carat-${mode}-tabs"]:checked`);
         carat = checkedRadio ? parseFloat(checkedRadio.value) : 0;
     }
-    return { 
-        goldType: goldType, 
-        weight: parseFloat(cleanNumber(document.getElementById(`weight-${mode}`).value)) || 0, 
-        carat: carat, 
-        commission: parseFloat(cleanNumber(document.getElementById(`commission-${mode}`).value)) || 0, 
-        profit: parseFloat(cleanNumber(document.getElementById(`profit-${mode}`).value)) || 0, 
-        tax: parseFloat(cleanNumber(document.getElementById(`tax-${mode}`).value)) || 0, 
+    return {
+        goldType: goldType,
+        weight: parseFloat(cleanNumber(document.getElementById(`weight-${mode}`).value)) || 0,
+        carat: carat,
+        commission: parseFloat(cleanNumber(document.getElementById(`commission-${mode}`).value)) || 0,
+        profit: parseFloat(cleanNumber(document.getElementById(`profit-${mode}`).value)) || 0,
+        tax: parseFloat(cleanNumber(document.getElementById(`tax-${mode}`).value)) || 0,
     };
 }
 
@@ -198,12 +199,12 @@ function calculate(values, price18, isAuto) {
 
     if (!basePriceSource) { resultDiv.innerHTML = '<p class="error">قیمت لحظه‌ای در دسترس نیست.</p>'; return; }
     if (!isValidInput(values.weight, values.carat)) { resultDiv.innerHTML = '<p class="error">لطفا وزن و عیار معتبر وارد کنید.</p>'; return; }
-    
+
     const pricePerGramOfCarat = (basePriceSource / 750) * values.carat;
     const baseValue = values.weight * pricePerGramOfCarat;
-    
+
     let wageAmount = 0, profitAmount = 0, taxAmount = 0, finalValue = baseValue;
-    
+
     if (values.goldType === 'نو/زینتی') {
         wageAmount = baseValue * (values.commission / 100);
         const subtotal_after_wage = baseValue + wageAmount;
@@ -242,7 +243,7 @@ function setupShareButton(data) {
     if (!shareBtn) return;
     let shareText = `محاسبه قیمت طلا (${data.goldType}):\n- وزن: ${data.weight} گرم\n- عیار: ${data.carat}\n- ارزش خام: ${formatterPrice(data.baseValue.toFixed(0))} تومان\n- مبلغ نهایی: ${formatterPrice(data.finalValue.toFixed(0))} تومان`;
     shareBtn.addEventListener('click', async () => {
-        if (navigator.share) { try { await navigator.share({ title: 'نتیجه محاسبه قیمت طلا', text: shareText }); } catch (e) {} }
+        if (navigator.share) { try { await navigator.share({ title: 'نتیجه محاسبه قیمت طلا', text: shareText }); } catch (e) { } }
         else { navigator.clipboard.writeText(shareText).then(() => showToast('نتیجه در کلیپ‌بورد کپی شد')).catch(e => showToast('خطا در کپی کردن', 'error')); }
     });
 }
@@ -265,12 +266,52 @@ const goldTypeVisuals = {
     'دست دوم': { label: 'دست دوم', tagClass: 'tag-used', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 18c.6 0 1-.4 1-1v-1a2 2 0 0 0-2-2h-2"/><path d="M4 18c-.6 0-1-.4-1-1v-1a2 2 0 0 1 2-2h2"/><path d="M10 14h4"/><path d="M18 10V8a2 2 0 0 0-2-2h-2"/><path d="M6 10V8a2 2 0 0 1 2-2h2"/><path d="m12 14 2 2 2-2"/><path d="m12 10-2-2-2 2"/></svg>` },
     'آب‌شده': { label: 'آب‌شده', tagClass: 'tag-melted', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9.5c-2-2.8-4-5-4-5.5 0-2 2-3.5 4-3.5s4 1.5 4 3.5c0 .5-2 2.7-4 5.5z"/><path d="M12 20.5c-5.5-5.5-5.5-12 0-17 5.5 5 5.5 11.5 0 17z"/></svg>` }
 };
-function saveCalculation(data) { let h = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; h.unshift(data); localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, MAX_HISTORY_ITEMS))); showToast('محاسبه ذخیره شد'); loadHistory(historySearchInput.value); }
-function loadHistory(searchTerm = '') {
+function saveCalculation(data) {
+    let h = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    h.unshift(data);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, MAX_HISTORY_ITEMS)));
+    showToast('محاسبه ذخیره شد');
+    loadHistory();
+
+    const latestItem = historyContainer.querySelector('.history-item');
+    if (latestItem) {
+        setTimeout(() => {
+            latestItem.classList.add('is-open');
+            latestItem.querySelector('.history-item-summary').setAttribute('aria-expanded', 'true');
+        }, 100);
+    }
+}
+function loadHistory() {
+    const searchTerm = historySearchInput.value.toLowerCase();
+    const filter = historyFilterSelect.value;
+    const sort = historySortSelect.value;
+
     let history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-    if (searchTerm.trim()) history = history.filter(item => `${item.goldType} ${item.weight} ${item.carat}`.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    if (searchTerm.trim()) {
+        history = history.filter(item =>
+            `${item.goldType} ${item.weight} ${item.carat}`.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    if (filter !== 'all') {
+        history = history.filter(item => item.goldType === filter);
+    }
+
+    const currentPrice18 = goldPrices["طلای 18 عیار"]?.price;
+    history.sort((a, b) => {
+        if (sort === 'date-asc') return new Date(a.date) - new Date(b.date);
+        if (sort === 'profit-desc' || sort === 'loss-desc') {
+            if (!currentPrice18) return 0;
+            const profitA = (a.weight * (currentPrice18 / 750) * a.carat) - a.finalValue;
+            const profitB = (b.weight * (currentPrice18 / 750) * b.carat) - b.finalValue;
+            return sort === 'profit-desc' ? profitB - profitA : profitA - profitB;
+        }
+        return new Date(b.date) - new Date(a.date);
+    });
+
     if (history.length === 0) {
-        historyContainer.innerHTML = `<div class="history-empty-state"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2"/><path d="M5 3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><path d="M12 12h.01"/></svg><h3>تاریخچه خالی است</h3><p>${searchTerm ? 'موردی با این مشخصات یافت نشد.' : 'پس از انجام محاسبه، نتایج در اینجا نمایش داده می‌شود.'}</p></div>`;
+        historyContainer.innerHTML = `<div class="history-empty-state"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2"/><path d="M5 3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><path d="M12 12h.01"/></svg><h3>تاریخچه خالی است</h3><p>${(searchTerm || filter !== 'all') ? 'موردی با این مشخصات یافت نشد.' : 'پس از انجام محاسبه، نتایج در اینجا نمایش داده می‌شود.'}</p></div>`;
     } else {
         historyContainer.innerHTML = '';
         history.forEach((item, index) => {
@@ -286,16 +327,29 @@ function renderHistoryItem(item) {
     const visuals = goldTypeVisuals[item.goldType] || goldTypeVisuals['نو/زینتی'];
     const date = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.date));
     const finalValue = item.finalValue || item.originalValue;
+
     let profitLoss = null;
     let plClass = 'neutral';
     let plLabel = 'سود/زیان';
+    let plIcon = '';
+
     const currentPrice18 = goldPrices["طلای 18 عیار"]?.price;
     if (currentPrice18 && finalValue > 0) {
         profitLoss = (item.weight * (currentPrice18 / 750) * item.carat) - finalValue;
-        if (profitLoss > 0.01) { plClass = 'profit'; plLabel = 'سود'; }
-        else if (profitLoss < -0.01) { plClass = 'loss'; plLabel = 'زیان'; }
-        else { plClass = 'neutral'; plLabel = 'سر به سر'; }
+        if (profitLoss > 0.01) {
+            plClass = 'profit';
+            plLabel = 'سود';
+            plIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg>`;
+        } else if (profitLoss < -0.01) {
+            plClass = 'loss';
+            plLabel = 'زیان';
+            plIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>`;
+        } else {
+            plClass = 'neutral';
+            plLabel = 'سر به سر';
+        }
     }
+
     const priceContextHTML = item.basePriceUsed ? `<div class="history-item-price-context">قیمت مبنای محاسبه: <b>${formatterPrice(item.basePriceUsed)} تومان</b></div>` : '';
     let breakdownHTML = '';
     if (typeof item.baseValue !== 'undefined') {
@@ -305,41 +359,42 @@ function renderHistoryItem(item) {
         breakdownHTML += `</tbody></table>`;
     }
     const detailsHTML = `${breakdownHTML}${priceContextHTML}<div class="history-item-footer"><span>ارزش خرید: <b>${formatterPrice(finalValue.toFixed(0))}</b></span></div>`;
+
     const itemArticle = document.createElement('article');
     itemArticle.className = 'history-item';
-    itemArticle.innerHTML = `<div class="history-item-summary" role="button" aria-expanded="false"><div class="history-item-main"><div class="history-item-icon ${visuals.tagClass}">${visuals.icon}</div><div class="history-item-info"><span class="spec">${item.weight} گرم <span class="gold-tag ${visuals.tagClass}">${visuals.label}</span></span><span class="date">${date}</span></div></div><div class="history-item-pl ${plClass}"><span class="pl-label">${plLabel}</span><span class="pl-value">${profitLoss !== null ? formatterPrice(Math.abs(profitLoss).toFixed(0)) : '-'}</span></div></div><div class="history-item-details">${detailsHTML}<div class="history-item-actions-new"><button class="modal-button secondary reuse-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg> استفاده مجدد</button><button class="modal-button danger delete-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> حذف</button></div></div>`;
+    itemArticle.innerHTML = `<div class="history-item-summary" role="button" aria-expanded="false"><div class="history-item-main"><div class="history-item-icon ${visuals.tagClass}">${visuals.icon}</div><div class="history-item-info"><span class="spec">${item.weight} گرم <span class="gold-tag ${visuals.tagClass}">${visuals.label}</span></span><span class="date">${date}</span></div></div><div class="history-item-pl ${plClass}"><span class="pl-label">${plLabel}</span><span class="pl-value">${plIcon} ${profitLoss !== null ? formatterPrice(Math.abs(profitLoss).toFixed(0)) : '-'}</span></div></div><div class="history-item-details">${detailsHTML}<div class="history-item-actions-new"><button class="modal-button secondary reuse-btn" aria-label="استفاده مجدد از این محاسبه"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg> استفاده مجدد</button><button class="modal-button danger delete-btn" aria-label="حذف این محاسبه"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> حذف</button></div></div>`;
+
     const summary = itemArticle.querySelector('.history-item-summary');
     summary.addEventListener('click', () => { itemArticle.classList.toggle('is-open'); summary.setAttribute('aria-expanded', itemArticle.classList.contains('is-open')); });
     itemArticle.querySelector('.reuse-btn').addEventListener('click', (e) => { e.stopPropagation(); reuseCalculation(item.goldType || 'نو/زینتی', item.weight, item.carat, item.commission || 0, item.profit || 0, item.tax || 0); });
     itemArticle.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); showConfirmationModal('آیا از حذف این محاسبه مطمئن هستید؟', () => deleteHistoryItem(item.date)); });
     return itemArticle;
 }
-function deleteHistoryItem(id) { let h = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; localStorage.setItem(HISTORY_KEY, JSON.stringify(h.filter(item => item.date !== id))); showToast('محاسبه حذف شد.'); loadHistory(historySearchInput.value); }
+function deleteHistoryItem(id) { let h = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; localStorage.setItem(HISTORY_KEY, JSON.stringify(h.filter(item => item.date !== id))); showToast('محاسبه حذف شد.'); loadHistory(); }
 function reuseCalculation(goldType, weight, carat, commission, profit, tax) {
     document.getElementById('radio-1').checked = true;
-    switchCalculatorMode('auto'); 
-    
-    // Select the correct radio button for gold type
+    switchCalculatorMode('auto');
+
     const typeToSelect = goldType || 'نو/زینتی';
     const radioToSelect = document.querySelector(`input[name="gold-type-auto-tabs"][value="${typeToSelect}"]`);
     if (radioToSelect) {
         radioToSelect.checked = true;
     }
 
-    updateFormVisibility('auto'); 
+    updateFormVisibility('auto');
 
-    document.getElementById('weight-auto').value = weight; 
+    document.getElementById('weight-auto').value = weight;
     if (goldType === 'آب‌شده') {
-        document.getElementById('carat-auto').value = carat; 
+        document.getElementById('carat-auto').value = carat;
     } else {
         const caratRadio = document.getElementById(`carat-auto-${carat}`);
-        if(caratRadio) caratRadio.checked = true;
+        if (caratRadio) caratRadio.checked = true;
     }
-    document.getElementById('commission-auto').value = commission || ''; 
-    document.getElementById('profit-auto').value = profit || ''; 
-    document.getElementById('tax-auto').value = tax || ''; 
-    validateForm(autoCalcForm, autoCalcButton, false); 
-    document.getElementById('calculator-card').scrollIntoView({ behavior: 'smooth' }); 
+    document.getElementById('commission-auto').value = commission || '';
+    document.getElementById('profit-auto').value = profit || '';
+    document.getElementById('tax-auto').value = tax || '';
+    validateForm(autoCalcForm, autoCalcButton, false);
+    document.getElementById('calculator-card').scrollIntoView({ behavior: 'smooth' });
 }
 function calculateAndDisplayTotalProfitLoss() {
     const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
@@ -358,18 +413,42 @@ function calculateAndDisplayTotalProfitLoss() {
     totalProfitLossContainer.innerHTML = `<div class="total-profit-loss-display"><span class="label">سود / زیان کلی</span><span class="profit-loss-value ${cssClass}">${formatterPrice(Math.abs(totalProfitLoss).toFixed(0))} تومان</span></div>`;
 }
 
-// --- PRICE FETCHING ---
+// --- NEW SKELETON LOADER FUNCTION ---
+function displaySkeletonLoader() {
+    const skeletonRows = 6; // Number of price items
+    let skeletonHTML = '<tbody>';
+    for (let i = 0; i < skeletonRows; i++) {
+        skeletonHTML += `
+            <tr>
+                <td><div class="skeleton skeleton-text"></div></td>
+                <td>
+                    <div class="price-cell-content">
+                        <div class="skeleton skeleton-text"></div>
+                        <div class="skeleton skeleton-text short"></div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+    skeletonHTML += '</tbody>';
+    priceTable.innerHTML = `<thead><tr><th>نوع</th><th>قیمت (تومان)</th></tr></thead>${skeletonHTML}`;
+}
+
+// --- PRICE FETCHING (HEAVILY MODIFIED) ---
 async function fetchPricesFromTgju() {
+    clearTimeout(retryTimeout); // Stop any pending retries
     autoCalcButton.disabled = true;
     prevGoldPrices = JSON.parse(JSON.stringify(goldPrices));
     const itemIds = ['391292', '137121', '137122', '391295', '137120', '137203'].join(',');
     const targetApiUrl = `https://api.tgju.org/v1/widget/tmp?keys=${itemIds}`;
     const proxiedApiUrl = proxyUrl(targetApiUrl);
+
     try {
         const response = await fetch(proxiedApiUrl);
-        if (!response.ok) throw new Error(`Request through proxy failed: ${response.status}`);
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         const data = await response.json();
-        if (!data || !data.response || !Array.isArray(data.response.indicators)) throw new Error("Invalid API data structure");
+        if (!data || !data.response || !Array.isArray(data.response.indicators)) throw new Error("Invalid API data");
+
         const priceList = data.response.indicators;
         priceList.forEach(item => {
             const priceData = { price: parseFloat(item.p.replace(/,/g, '')) / 10, changeAmount: parseFloat(item.d.replace(/,/g, '')) / 10, changePercent: item.dp, direction: item.dt };
@@ -383,61 +462,139 @@ async function fetchPricesFromTgju() {
                 case 137203: goldPrices["دلار آمریکا"] = priceData; break;
             }
         });
+
         localStorage.setItem(CACHED_PRICES_KEY, JSON.stringify({ prices: goldPrices, timestamp: new Date().toISOString() }));
         displayPrices();
         lastUpdateTime = new Date();
         displayUpdateStatus();
-        startPriceStalenessChecker();
-        loadHistory(historySearchInput.value);
+        startPriceUpdateCycle(); // Start the 10-minute refresh and countdown
+        loadHistory();
         validateForm(autoCalcForm, autoCalcButton, false);
-    } catch (error) { console.error("Critical error fetching data:", error); useCachedPrices(); }
+
+    } catch (error) {
+        console.error("Critical error fetching data:", error);
+        handleFetchError();
+    }
 }
-function useCachedPrices() {
+
+function handleFetchError() {
     const cachedData = JSON.parse(localStorage.getItem(CACHED_PRICES_KEY));
     if (cachedData && cachedData.prices) {
         Object.assign(goldPrices, cachedData.prices);
         lastUpdateTime = new Date(cachedData.timestamp);
-        showToast('عدم دریافت قیمت جدید، از آخرین قیمت ذخیره‌شده استفاده شد.', 'warning');
+        showToast('خطا در دریافت قیمت. از آخرین داده ذخیره‌شده استفاده شد.', 'warning');
         displayPrices();
-        displayUpdateStatus(true);
-        loadHistory(historySearchInput.value);
-        validateForm(autoCalcForm, autoCalcButton, false);
+        displayUpdateStatus(true, `خطا. تلاش مجدد تا ۳۰ ثانیه...`);
     } else {
         priceTable.innerHTML = '<tr><td colspan="2" class="error">خطا در دریافت قیمت‌ها.</td></tr>';
-        document.getElementById('update-status-container').innerHTML = '<p class="error">امکان دریافت قیمت وجود ندارد.</p>';
+        displayUpdateStatus(false, 'خطا در دریافت. تلاش مجدد تا ۳۰ ثانیه...');
         showToast('خطا در دریافت قیمت‌ها', 'error');
-        autoCalcButton.disabled = true;
     }
+    // Schedule a retry
+    retryTimeout = setTimeout(fetchPricesFromTgju, RETRY_INTERVAL);
 }
+
 function displayPrices() {
     const tbody = document.createElement("tbody");
     const nameMap = { "طلای 18 عیار / 740": "گرم طلای ۱۸ عیار (۷۴۰)", "طلای 18 عیار": "گرم طلای ۱۸ عیار (۷۵۰)", "طلای 24 عیار": "گرم طلای ۲۴ عیار", "طلای دست دوم": "طلای دست دوم", "مثقال طلا": "مثقال طلا", "دلار آمریکا": "دلار" };
+
     Object.keys(nameMap).forEach(key => {
         const priceData = goldPrices[key];
         const prevPriceData = prevGoldPrices[key];
         let flashClass = '';
-        if (priceData && prevPriceData && priceData.price !== prevPriceData.price) { flashClass = priceData.price > prevPriceData.price ? 'flash-up' : 'flash-down'; }
+        if (priceData && prevPriceData && priceData.price !== prevPriceData.price) {
+            flashClass = priceData.price > prevPriceData.price ? 'flash-up' : 'flash-down';
+        }
+
         const row = tbody.insertRow();
         row.className = flashClass;
         row.insertCell(0).textContent = nameMap[key];
+
         const priceCell = row.insertCell(1);
         if (priceData) {
-            const directionClass = priceData.direction === 'high' ? 'up' : 'low';
-            const changeHTML = `<div class="price-change ${directionClass}"><span class="price-change-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8"><path fill="none" stroke="currentcolor" stroke-linecap="round" stroke-width="2" d="m1 6 5-4 5 4"></path></svg></span><span class="change-amount">${formatterPrice(priceData.changeAmount)}</span><span class="change-percent">(${priceData.changePercent}%)</span></div>`;
+            let directionClass = '';
+            let arrowHTML = '';
+
+            if (priceData.changeAmount > 0) {
+                directionClass = 'up';
+                arrowHTML = `<span class="price-change-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8"><path fill="none" stroke="currentcolor" stroke-linecap="round" stroke-width="2" d="m1 6 5-4 5 4"></path></svg></span>`;
+            } else if (priceData.changeAmount < 0) {
+                directionClass = 'low';
+                arrowHTML = `<span class="price-change-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8"><path fill="none" stroke="currentcolor" stroke-linecap="round" stroke-width="2" d="m1 6 5-4 5 4"></path></svg></span>`;
+            }
+
+            const changeHTML = `<div class="price-change ${directionClass}">${arrowHTML}<span class="change-amount">${formatterPrice(priceData.changeAmount)}</span><span class="change-percent">(${priceData.changePercent}%)</span></div>`;
             priceCell.innerHTML = `<div class="price-cell-content"><span class="price-value">${formatterPrice(priceData.price)}</span>${changeHTML}</div>`;
-        } else { priceCell.innerHTML = `<span class="price-value">نامشخص</span>`; }
+        } else {
+            priceCell.innerHTML = `<span class="price-value">نامشخص</span>`;
+        }
     });
+
     priceTable.innerHTML = '<thead><tr><th>نوع</th><th>قیمت (تومان)</th></tr></thead>';
     priceTable.appendChild(tbody);
 }
-function refreshPrices() { autoCalcButton.disabled = true; priceTable.innerHTML = '<tr><td colspan="2">در حال به‌روزرسانی...</td></tr>'; document.getElementById("update-status-container").innerHTML = ""; fetchPricesFromTgju(); }
-function displayUpdateStatus(isCached = false) {
-    const container = document.getElementById("update-status-container"); if (!lastUpdateTime) return;
-    const timeFormatted = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(lastUpdateTime);
-    container.innerHTML = `<div class="update-status" style="display:flex; align-items:center; justify-content:space-between;"><button onclick="refreshPrices()" class="history-action-btn" title="دریافت قیمت جدید" aria-label="دریافت قیمت جدید"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="refresh-icon"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg></button><div class="time-text" id="time-text-container" style="font-size:13px;">آخرین به‌روزرسانی: ${timeFormatted}${isCached ? ' (ذخیره شده)' : ''}</div></div>`;
+
+function refreshPrices() {
+    autoCalcButton.disabled = true;
+    displaySkeletonLoader(); // <<<--- 2. SECOND CHANGE: Show skeleton on manual refresh
+    const statusContainer = document.getElementById("update-status-container");
+    if (statusContainer) statusContainer.innerHTML = "";
+    fetchPricesFromTgju();
 }
-function startPriceStalenessChecker() { if (priceUpdateInterval) clearInterval(priceUpdateInterval); priceUpdateInterval = setInterval(checkPriceStaleness, 10000); }
-function checkPriceStaleness() { if (!lastUpdateTime) return; if ((new Date - lastUpdateTime) / 1e3 > 60) { const t = document.getElementById("time-text-container"); t && (t.innerHTML = '<span class="stale-prices">قیمت‌ها نیاز به به‌روزرسانی دارند.</span>'), clearInterval(priceUpdateInterval); } }
+
+function displayUpdateStatus(isCached = false, customMessage = '') {
+    const container = document.getElementById("update-status-container");
+    if (!container) return;
+
+    let timeTextHTML = '';
+    if (customMessage) {
+        timeTextHTML = `<span class="stale-prices">${customMessage}</span>`;
+    } else if (lastUpdateTime) {
+        const timeFormatted = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(lastUpdateTime);
+        timeTextHTML = `آخرین به‌روزرسانی: ${timeFormatted}${isCached ? ' (ذخیره شده)' : ''} <span id="countdown-timer" class="countdown-timer"></span>`;
+    }
+
+    container.innerHTML = `
+        <div class="update-status">
+            <button onclick="refreshPrices()" class="refresh-btn" title="دریافت قیمت جدید" aria-label="دریافت قیمت جدید">
+                <svg class="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                    <path d="M21 3v5h-5"></path>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                    <path d="M8 16H3v5"></path>
+                </svg>
+            </button>
+            <div class="time-text" id="time-text-container">${timeTextHTML}</div>
+        </div>`;
+}
+
+function startPriceUpdateCycle() {
+    clearInterval(priceUpdateInterval);
+    clearInterval(countdownInterval);
+
+    priceUpdateInterval = setInterval(refreshPrices, REFRESH_INTERVAL);
+
+    let countdown = REFRESH_INTERVAL;
+    const timerElement = document.getElementById('countdown-timer');
+
+    const updateCountdown = () => {
+        if (!timerElement) {
+            clearInterval(countdownInterval);
+            return;
+        }
+        countdown -= 1000;
+        const minutes = Math.floor(countdown / (1000 * 60));
+        const seconds = Math.floor((countdown % (1000 * 60)) / 1000);
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        if (countdown <= 0) {
+            countdown = REFRESH_INTERVAL;
+        }
+    };
+
+    updateCountdown();
+    countdownInterval = setInterval(updateCountdown, 1000);
+}
+
 
 // --- UNIT CONVERSION LOGIC ---
 function handleConversion() {
@@ -446,17 +603,17 @@ function handleConversion() {
         converterResultDiv.innerHTML = `<p>نتیجه تبدیل در اینجا نمایش داده می‌شود.</p>`;
         return;
     }
-    
+
     const fromUnitRadio = document.querySelector('input[name="from-unit-tabs"]:checked');
     const toUnitRadio = document.querySelector('input[name="to-unit-tabs"]:checked');
-    
-    if (!fromUnitRadio || !toUnitRadio) return; // Exit if radios are not found
+
+    if (!fromUnitRadio || !toUnitRadio) return;
 
     const fromUnitValue = fromUnitRadio.value;
     const toUnitValue = toUnitRadio.value;
-    
+
     const result = convertUnits(value, fromUnitValue, toUnitValue);
-    
+
     const fromLabel = document.querySelector(`label[for="${fromUnitRadio.id}"]`).textContent;
     const toLabel = document.querySelector(`label[for="${toUnitRadio.id}"]`).textContent;
 
