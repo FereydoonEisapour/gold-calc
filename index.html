@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>محاسبه‌گر حرفه‌ای قیمت طلا (لحظه‌ای)</title>
 
-    <!-- SEO Meta Tags (Improved) -->
+    <!-- SEO Meta Tags -->
     <meta name="description" content="محاسبه‌گر آنلاین و حرفه‌ای قیمت طلای آبشده، نو و دست دوم با قابلیت محاسبه لحظه‌ای، کارمزد و سود/زیان. بهترین ابزار برای معاملات طلا.">
     <meta name="keywords" content="محاسبه‌گر طلا, قیمت طلا, طلای آبشده, قیمت لحظه‌ای طلا, مبدل واحد طلا, مثقال, گرم, عیار, اجرت طلا, سود طلا">
     <meta name="robots" content="index, follow">
@@ -311,12 +311,30 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m18.7 12.3-1.2-1.2a2 2 0 0 0-2.8 0L9.4 16.4a2 2 0 0 0 0 2.8l1.2 1.2a2 2 0 0 0 2.8 0l5.3-5.3a2 2 0 0 0 0-2.8z"/><path d="M9 13h-2"/><path d="M6 10h-2"/><path d="M3 7h8"/></svg>
                 محاسبات قبلی
             </h2>
-            <div class="form-group">
-                 <label for="history-search-input" class="inp">
+            <div class="history-controls">
+                <label for="history-search-input" class="inp">
                     <input type="search" id="history-search-input" placeholder="&nbsp;">
-                    <span class="label">جستجو در تاریخچه...</span>
+                    <span class="label">جستجو...</span>
                     <span class="focus-bg"></span>
                 </label>
+                <div class="select-wrapper">
+                    <select id="history-filter" aria-label="فیلتر کردن تاریخچه">
+                        <option value="all">همه انواع</option>
+                        <option value="نو/زینتی">نو / زینتی</option>
+                        <option value="دست دوم">دست دوم</option>
+                        <option value="آب‌شده">آب‌شده</option>
+                    </select>
+                    <svg class="select-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                 <div class="select-wrapper">
+                    <select id="history-sort" aria-label="مرتب‌سازی تاریخچه">
+                        <option value="date-desc">جدیدترین</option>
+                        <option value="date-asc">قدیمی‌ترین</option>
+                        <option value="profit-desc">بیشترین سود</option>
+                        <option value="loss-desc">بیشترین زیان</option>
+                    </select>
+                    <svg class="select-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
             </div>
             <div id="history-container">
                 <!-- History items will be injected here by JavaScript -->
